@@ -253,12 +253,22 @@ class KnnVcSelfAttacker(_Base):
     """
 
     def __init__(self, topk: int = 4, device: str = "cpu"):
+        import os
+
         self.device = device
         self.topk = topk
         self.name = f"knnvc_self{topk}"
-        self.model = torch.hub.load(
-            "bshall/knn-vc", "knn_vc", prematched=True, trust_repo=True,
-            pretrained=True, device=device)
+        # Prefer a local clone (checkpoints pre-fetched into the torch hub cache);
+        # the GitHub fetch inside torch.hub is unreliable from this network.
+        local = os.environ.get("KNNVC_REPO", "/root/autodl-tmp/knn-vc")
+        if os.path.isdir(local):
+            self.model = torch.hub.load(
+                local, "knn_vc", source="local", prematched=True,
+                pretrained=True, device=device)
+        else:
+            self.model = torch.hub.load(
+                "bshall/knn-vc", "knn_vc", prematched=True, trust_repo=True,
+                pretrained=True, device=device)
 
     @torch.no_grad()
     def apply(self, wav):
@@ -271,7 +281,11 @@ class KnnVcSelfAttacker(_Base):
             q = self.model.get_features(p)
             m = self.model.get_matching_set([p])
             y = self.model.match(q, m, topk=self.topk)
-        return _fit(y.cpu().numpy().ravel(), len(wav))
+        y = y.cpu().numpy().ravel()
+        # level-match to the input so the channel effect is not confounded with gain
+        rms_in = float(np.sqrt(np.mean(x**2)) + 1e-12)
+        rms_out = float(np.sqrt(np.mean(y**2)) + 1e-12)
+        return _fit(y * (rms_in / rms_out), len(wav))
 
     @torch.no_grad()
     def repr_of(self, x):

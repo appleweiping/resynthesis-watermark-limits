@@ -32,6 +32,19 @@ ROOT = Path(__file__).resolve().parents[2]
 ATTACKERS = ["mel80_gl", "vocos", "encodec6k", "dac", "snac"]
 
 
+def _keyed_pattern(an: MelAnalysis, key: int, device) -> torch.Tensor:
+    """Smooth keyed spectral pattern: random combination of low-order cosine
+    profiles over mel bins — survives codec spectral smearing far better than a
+    per-bin random pattern."""
+    g = torch.Generator(device="cpu"); g.manual_seed(key)
+    coeff = torch.randn(8, generator=g)
+    bins = torch.arange(an.n_mels, dtype=torch.float32)
+    basis = torch.stack([torch.cos(np.pi * (k + 1) * (bins + 0.5) / an.n_mels)
+                         for k in range(8)])           # (8, n_mels)
+    pattern = (coeff[:, None] * basis).sum(0)
+    return (pattern / torch.linalg.norm(pattern)).to(device)
+
+
 def embed_payload(an: MelAnalysis, x: torch.Tensor, key: int, bits: np.ndarray,
                   pesq_target: float) -> tuple[torch.Tensor, float, float]:
     X = an.stft(x)
@@ -39,9 +52,7 @@ def embed_payload(an: MelAnalysis, x: torch.Tensor, key: int, bits: np.ndarray,
     n_frames = X.shape[-1]
     B = len(bits)
     block = n_frames // B
-    g = torch.Generator(device="cpu"); g.manual_seed(key)
-    pattern = torch.randn((an.n_mels,), generator=g).to(x.device)
-    pattern = pattern / torch.linalg.norm(pattern)
+    pattern = _keyed_pattern(an, key, x.device)
     D = torch.zeros_like(X.real)
     for i, b in enumerate(bits):
         sl = slice(i * block, (i + 1) * block)
@@ -59,15 +70,16 @@ def decode_payload(an: MelAnalysis, y: torch.Tensor, key: int, B: int) -> np.nda
     mel = an.mel(y)
     n_frames = mel.shape[-1]
     block = n_frames // B
-    g = torch.Generator(device="cpu"); g.manual_seed(key)
-    pattern = torch.randn((an.n_mels,), generator=g).to(y.device)
-    pattern = pattern / torch.linalg.norm(pattern)
+    pattern = _keyed_pattern(an, key, y.device)
     bits = []
     for i in range(B):
         sl = mel[:, i * block:(i + 1) * block]
         m = sl.shape[-1] - (sl.shape[-1] % 2)
         diff = sl[:, 0:m:2] - sl[:, 1:m:2]        # host cancels, mark adds
-        stat = float(torch.sum(pattern[:, None] * diff))
+        # average over frame pairs, whiten per mel bin (noise-scaled correlation)
+        d_mean = diff.mean(dim=1)
+        d_std = diff.std(dim=1).clamp_min(1e-6)
+        stat = float(torch.sum(pattern * d_mean / d_std))
         bits.append(1 if stat > 0 else 0)
     return np.array(bits, dtype=np.int64)
 
@@ -77,7 +89,7 @@ def main() -> None:
     ap.add_argument("--manifest", required=True)
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     ap.add_argument("--n-test", type=int, default=200)
-    ap.add_argument("--bits", type=int, default=16)
+    ap.add_argument("--bits", type=int, default=8)
     ap.add_argument("--pesq-target", type=float, default=4.2)
     ap.add_argument("--strict", action="store_true", default=True)
     ap.add_argument("--no-strict", dest="strict", action="store_false")

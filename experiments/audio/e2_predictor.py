@@ -126,6 +126,12 @@ def run_split(split: str, man: dict, attackers, an: MelAnalysis, args,
             pa = per_att[att.name]
             neg_w, pos_w = np.array(pa["neg_w"]), np.array(pa["pos_w"])
             neg_m, pos_m = np.array(pa["neg_m"]), np.array(pa["pos_m"])
+            # PAIRED transmission statistics: attacks are deterministic and the
+            # probe is evaluated on the same utterance marked vs clean, so the
+            # per-utterance score difference isolates the transmitted pattern
+            # (unpaired AUC drowns it in host variability across utterances).
+            paired_m = float(np.mean(pos_m > neg_m) + 0.5 * np.mean(pos_m == neg_m))
+            paired_w = float(np.mean(pos_w > neg_w) + 0.5 * np.mean(pos_w == neg_w))
             points.append({
                 "split": split, "dir": di, "kind": kind, "beta": beta,
                 "attacker": att.name, "n_utts": len(sel),
@@ -133,6 +139,8 @@ def run_split(split: str, man: dict, attackers, an: MelAnalysis, args,
                 "auc_wave": auc_oriented(neg_w, pos_w),
                 "auc_raw_mel": auc_raw(neg_m, pos_m),
                 "auc_mel": auc_oriented(neg_m, pos_m),
+                "paired_mel": max(paired_m, 1.0 - paired_m),
+                "paired_wave": max(paired_w, 1.0 - paired_w),
                 "pred_sensitivity": float(np.mean(sens[att.name])),
                 "pred_mel_fraction": float(np.mean(mel_fracs)),
                 "pred_snr_db": float(np.mean(snrs)),
@@ -204,15 +212,31 @@ def _fit_eval(fit_pts, test_pts, pred_key: str, response: str = "auc_oriented",
     return out
 
 
+def _within_rank(vals: np.ndarray, strata: np.ndarray) -> np.ndarray:
+    """Rank-normalize within each stratum (attacker) -> comparable across strata."""
+    from scipy import stats as sps
+
+    out = np.empty_like(vals, dtype=float)
+    for s in np.unique(strata):
+        idx = np.flatnonzero(strata == s)
+        out[idx] = sps.rankdata(vals[idx]) / (len(idx) + 1.0)
+    return out
+
+
 def _permutation_test(test_pts, pred_key: str, response: str = "auc_oriented",
                       n_perm: int = 1000, seed: int = 0) -> dict:
-    """Spearman under within-attacker permutations of the predictor."""
+    """WITHIN-ATTACKER pooled Spearman with a within-attacker permutation null.
+
+    Both predictor and response are rank-normalized within attacker before
+    pooling, so between-attacker level differences cannot create or mask an
+    association (the earlier pooled statistic did exactly that)."""
     from scipy import stats as sps
 
     x = np.array([p[pred_key] for p in test_pts], float)
     y = np.array([p[response] for p in test_pts], float)
     strata = np.array([p["attacker"] for p in test_pts])
-    obs = float(sps.spearmanr(x, y).statistic)
+    xr, yr = _within_rank(x, strata), _within_rank(y, strata)
+    obs = float(sps.spearmanr(xr, yr).statistic)
     rng = np.random.default_rng(seed)
     null = []
     for _ in range(n_perm):
@@ -220,31 +244,36 @@ def _permutation_test(test_pts, pred_key: str, response: str = "auc_oriented",
         for s in np.unique(strata):
             idx = np.flatnonzero(strata == s)
             xp[idx] = xp[rng.permutation(idx)]
-        null.append(sps.spearmanr(xp, y).statistic)
+        null.append(sps.spearmanr(_within_rank(xp, strata), yr).statistic)
     null = np.array(null)
     p = float((np.sum(np.abs(null) >= abs(obs)) + 1) / (n_perm + 1))
-    return {"observed_spearman": obs, "p_value": p,
+    return {"observed_within_spearman": obs, "p_value": p,
             "null_abs_95": float(np.percentile(np.abs(null), 95))}
 
 
-def _necessity_test(test_pts, responses=("auc_wave", "auc_mel"),
-                    quantile: float = 0.10) -> dict:
-    """One-sided implication the theory actually makes: s_W ~ 0 => AUC ~ 0.5
-    in EVERY probe domain. Compare |AUC-0.5| of the bottom-decile-sensitivity
-    points (per attacker) against the rest."""
-    out = {}
+def _necessity_test(test_pts, responses=("paired_wave", "paired_mel"),
+                    rel_threshold: float = 0.25) -> dict:
+    """One-sided implication the theory actually makes: s_W ~ 0 => chance in
+    EVERY probe domain. 'Near-null' must be ABSOLUTE, not a per-attacker decile:
+    a direction counts as near-null for attacker W only if its sensitivity is
+    below `rel_threshold` x the median s_W of that attacker (waveform codecs may
+    have NO near-null direction — itself a finding: their analysis kernel is
+    tiny, so nothing is reliably erased)."""
+    out = {"rel_threshold": rel_threshold, "per_attacker_n_low": {}}
     strata = np.array([p["attacker"] for p in test_pts])
     s = np.array([p["pred_sensitivity"] for p in test_pts], float)
     low = np.zeros(len(test_pts), bool)
     for a in np.unique(strata):
         idx = np.flatnonzero(strata == a)
-        thr = np.quantile(s[idx], quantile)
-        low[idx[s[idx] <= thr]] = True
+        thr = rel_threshold * float(np.median(s[idx]))
+        sel = idx[s[idx] <= thr]
+        low[sel] = True
+        out["per_attacker_n_low"][a] = int(len(sel))
     for resp in responses:
         y = np.abs(np.array([p[resp] for p in test_pts], float) - 0.5)
         out[resp] = {
             "n_low": int(low.sum()),
-            "median_dev_low_sens": float(np.median(y[low])),
+            "median_dev_low_sens": float(np.median(y[low])) if low.any() else None,
             "median_dev_rest": float(np.median(y[~low])),
             "max_dev_low_sens": float(np.max(y[low])) if low.any() else None,
         }
@@ -281,7 +310,7 @@ def main() -> None:
         "points_fit": fit_pts, "points_test": test_pts,
         "necessity_test": _necessity_test(test_pts),
     }
-    for resp in ("auc_mel", "auc_wave"):
+    for resp in ("paired_mel", "paired_wave", "auc_mel", "auc_wave"):
         out[f"evaluation_{resp}"] = {p: _fit_eval(fit_pts, test_pts, p, resp)
                                      for p in preds}
         out[f"permutation_{resp}"] = {p: _permutation_test(test_pts, p, resp)
@@ -295,11 +324,12 @@ def main() -> None:
         out[f"by_attacker_{resp}"] = by_att
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(out), encoding="utf-8")
-    for resp in ("auc_mel", "auc_wave"):
-        ev = out[f"evaluation_{resp}"]["pred_sensitivity"]
+    for resp in ("paired_mel", "paired_wave"):
         pm = out[f"permutation_{resp}"]["pred_sensitivity"]
-        print(f"[E2] {resp}: sens spearman={ev['phi_fit']['spearman']:+.3f} "
-              f"CI={ev['spearman_ci']} perm_p={pm['p_value']:.4g}")
+        by = out[f"by_attacker_{resp}"]
+        rhos = {a: round(by[a]["phi_fit"]["spearman"], 2) for a in by}
+        print(f"[E2] {resp}: within-pooled rho={pm['observed_within_spearman']:+.3f} "
+              f"perm_p={pm['p_value']:.4g} per-attacker={rhos}")
     print(f"[E2] necessity: {json.dumps(out['necessity_test'])}")
     print(f"[E2] wrote {args.out}")
 

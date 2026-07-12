@@ -47,6 +47,8 @@ def main() -> None:
     ap.add_argument("--attackers", default=",".join(DEFAULT_ATTACKERS))
     ap.add_argument("--baselines", default=",".join(DEFAULT_BASELINES))
     ap.add_argument("--n-test", type=int, default=1000)
+    ap.add_argument("--test-start", type=int, default=0,
+                    help="offset into the test split (for sharding slow baselines)")
     ap.add_argument("--n-calib", type=int, default=5000)
     ap.add_argument("--n-calib-attacked", type=int, default=1000,
                     help="attacked-calibration subset (recalibration diagnostic)")
@@ -64,7 +66,8 @@ def main() -> None:
     keys = [1000 + 17 * k for k in range(args.keys)]
 
     # ---- load audio ------------------------------------------------------------
-    test = [(clip_uid(r), x) for _, r, x in iter_split(man, "test", args.n_test)]
+    test = [(clip_uid(r), x) for _, r, x in
+            iter_split(man, "test", args.test_start + args.n_test)][args.test_start:]
     calib = [x for _, _, x in iter_split(man, "calibration", args.n_calib)]
     fit_sub = [x for _, _, x in iter_split(man, "fit", 24)]
     print(f"[E1] test={len(test)} calib={len(calib)} attackers="
