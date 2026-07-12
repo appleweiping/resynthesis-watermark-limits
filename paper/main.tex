@@ -233,9 +233,9 @@ vocoder} (AUC $1.00\!\to\!\aucAudiosealMel$ and $\aucAudiosealVoc$; TPR@1\%FPR
 $1.00\!\to\!0.03$, payload $\bitaccAudiosealMel$ at chance under mel), while it \emph{fully}
 resists the EnCodec it was hardened against ($0.99/0.98/0.94$ AUC). (Its sub-$0.5$ AUC is a
 sign-inversion leaving oriented separability $\approx0.80$; the deployed detector still fails.) The invariant mel mark---in the preserved subspace by construction---keeps separability
-under mel-inversion ($\aucInvMelBefore{}\!\to\!\aucInvMel$) and \emph{erodes gracefully} under
-EnCodec (AUC $0.74$, $0.67$, $0.60$ at $6$, $3$, $1.5$\,kbps), the $\Rstar$ behaviour of
-Thm.~\ref{thm:achieve}. Crucially, \emph{no} mark is both operationally strong on clean audio and
+under both the mel-inversion and the neural vocoder ($\aucInvMelBefore{}\!\to\!\aucInvMel$,
+$\aucInvVoc$; $95\%$ CI $\ciAucInvMel$) and \emph{erodes gracefully} under EnCodec (AUC $0.74$,
+$0.67$, $0.60$ at $6$, $3$, $1.5$\,kbps), the $\Rstar$ behaviour of Thm.~\ref{thm:achieve}. Crucially, \emph{no} mark is both operationally strong on clean audio and
 laundering-robust: our constructive invariant embedder is separable (AUC $0.94$) but weak at
 $1\%$ FPR (TPR $0.11$) even clean---the very imperceptibility--robustness tension the theory
 predicts; a learned embedder would tighten it. Because survival is detector-dependent, cross-mark
@@ -280,10 +280,11 @@ Thm.~\ref{thm:converse} predicts.
 \end{figure}
 
 \noindent\textbf{Achievability \& rate.} Carrying a multi-bit payload in the same invariant
-sub-channel (BPSK over mel-envelope patterns), the invariant mark recovers bits after
-laundering where a surface payload of equal size decays to chance; the surviving payload grows
-with the imperceptibility budget and shrinks with the attacker's aggressiveness, the qualitative
-signature of the water-filling rate $\Rstar$ \eqref{eq:rstar} (Fig.~\ref{fig:e2}).
+sub-channel (BPSK over mel-envelope patterns), the invariant mark recovers bits after both
+mel-inversion and the neural vocoder (bit-accuracy $0.80$/$0.81$ at $22$\,dB) where a surface
+payload of equal size decays to chance; the surviving payload grows with the imperceptibility
+budget and shrinks with the attacker's aggressiveness, the qualitative signature of the
+water-filling rate $\Rstar$ \eqref{eq:rstar} (Fig.~\ref{fig:e2}).
 
 \section{Discussion and scope}
 \label{sec:disc}
@@ -291,10 +292,11 @@ The converse targets a \emph{blind, non-adaptive} attacker running a generic res
 this matches the empirical-collapse literature and yields the clean DPI. A key-aware attacker
 that optimizes to remove our specific mark is an arms race we do not claim to win---we treat it
 as a stress test, not a core result. Real analysis maps are only approximately sufficient and
-$\mathcal S$ is stochastic; our claims degrade gracefully as these idealizations break. We report
-PESQ alongside SNR (invariant mark $\pesqInv$, surface $\pesqSurf$, AudioSeal $\pesqAudioseal$)
-so survival is not merely bought with audibility; the main remaining limitation is that we do not
-test \emph{voice conversion}, a strong laundering family where the converse should bite hardest.
+$\mathcal S$ is stochastic; our claims degrade gracefully as these idealizations break. PESQ confirms the invariant mark is near-transparent ($\pesqInv$, versus AudioSeal's
+$\pesqAudioseal$), so its survival is \emph{not} bought with audibility---at matched SNR it is in
+fact far less audible than the surface mark ($\pesqSurf$). The main remaining limitation is that
+we do not test \emph{voice conversion}, a strong laundering family where the converse should bite
+hardest.
 The practical message is prescriptive: \emph{a watermark
 survives generative laundering only insofar as it perturbs the invariants the generator is built
 to preserve}---the regime where imperceptibility is hardest, quantified by $\Rstar$.

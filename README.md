@@ -112,29 +112,34 @@ post-laundering AUC falls from 0.89 to 0.50 (chance), matching the closed form t
 surviving detection exponent and rate `R*` are positive for the invariant mark and identically
 zero for the nullspace mark. (26/26 theorem tests green.)
 
-**Real speech (E1, LibriSpeech test-clean, N=80).** Attackers sweep the size of `ker(A)`:
+**Real speech (E1, LibriSpeech test-clean, N=80).** Attackers sweep the size of `ker(A)` — from a
+near-lossless STFT control, through a **lossy mel-inversion and a real neural vocoder (Vocos)**,
+to EnCodec at falling bitrates. Detection **AUC after** each channel (before ≈ 1.00, except the
+invariant mark 0.94):
 
-| Watermark | STFT-GL (control, phase-only null) | mel-GL (lossy) | EnCodec 6k / 3k / 1.5k |
-|---|---|---|---|
-| Surface (nullspace) | 1.00 → 0.48 | 1.00 → 0.44 | 0.53 / 0.54 / 0.56 |
-| **Invariant (mel)** | 0.94 → 0.93 | 0.94 → **0.93** | 0.74 / 0.67 / 0.60 |
-| AudioSeal (deployed) | 1.00 → 1.00 | 1.00 → **0.20** | 1.00 / 0.98 / 0.94 |
+| Watermark | STFT† (control) | mel-inv. | **Vocos (neural vocoder)** | EnC 6k / 3k / 1.5k |
+|---|---|---|---|---|
+| Surface (phase/nullspace) | 0.45 | 0.54 | 0.49 | 0.53 / 0.54 / 0.56 |
+| **Invariant (mel envelope)** | 0.93 | 0.93 | **0.93** | 0.74 / 0.67 / 0.60 |
+| AudioSeal (deployed) | 0.98 | **0.15** | **0.33** | 0.99 / 0.98 / 0.94 |
 
-(AUC = separability, the primary metric — it is what the Chernoff exponent governs.) The surface
-mark dies under every attacker. **AudioSeal** resists the EnCodec it was hardened against but is
-**defeated operationally by mel-spectrogram inversion**: TPR@1%FPR 1.00→0.03 and payload
-bit-accuracy 0.48 (chance); its AUC of 0.20 is a sign-inversion (residual separability),
-consistent with its small but *nonzero* mel invariant-fraction 0.26. The **invariant mark's
-separability** survives the mel channel (AUC 0.94→0.93) and degrades *gracefully* as the codec
-bandwidth (invariant subspace) shrinks. Survival is channel-specific and predicted by each
-mark's invariant-energy fraction `f`; for a fixed channel, post-laundering AUC is monotone in
-`f`, well described by the converse's √f form `Φ(a√f+b)`.
+(AUC = separability, the metric the Chernoff exponent governs.) The phase-domain surface mark
+dies under every channel. **AudioSeal collapses under both the mel-inversion *and* the real
+neural vocoder** (AUC 0.15 / 0.33, TPR@1%FPR 0.04 / 0.05, payload at chance) yet resists the
+EnCodec it was hardened against — survival is channel-specific. The **invariant mark's
+separability survives both vocoders** (0.94→0.93, 95% CI [0.88, 0.97]) and erodes *gracefully* as
+the EnCodec bitrate shrinks the invariant subspace (`R*` in action). In a **single-fixed-detector
+sweep**, post-laundering AUC is monotone in the invariant-energy fraction `f`, tracking the
+converse's √f form `Φ(a√f+b)`.
 
-> **Honest caveats.** Our synthesizers are STFT/mel-spectrogram inversion (Griffin–Lim) and a
-> neural codec (EnCodec); a learned neural vocoder / voice conversion is future work. The
-> constructive invariant embedder is a proof-of-concept — strong in AUC but weak at a stringent
-> 1% FPR (TPR ≈ 0.11 even on clean audio); a learned embedder would tighten it. Marks are matched
-> by SNR (24 dB), not a perceptual metric (PESQ/ViSQOL) — a limitation we flag.
+**Perception (PESQ):** the invariant mark is **near-transparent (4.61**, vs AudioSeal's 4.53) —
+its survival is *not* bought with audibility; at matched SNR it is far *less* audible than the
+surface mark (1.99).
+
+> **Honest caveats.** We test spectral inversion, a **neural vocoder (Vocos)**, and a neural codec
+> (EnCodec); **voice conversion** is the main remaining laundering family (future work). The
+> constructive invariant embedder is a proof-of-concept — strong in AUC and PESQ but weak at a
+> stringent 1% FPR (TPR ≈ 0.11 even on clean audio); a learned embedder would tighten it.
 
 **Achievability (E2).** A 16-bit invariant payload survives the mel-vocoder (bit-accuracy
 0.82 → 0.80 at 22 dB SNR, growing with budget), while a surface payload of equal size collapses

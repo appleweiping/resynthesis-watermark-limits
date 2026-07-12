@@ -68,9 +68,9 @@ def main() -> None:
         # Round-2: neural vocoder + perceptual quality (guarded — emit only if present).
         (r"\aucAudiosealVoc", g(aseal_voc, "auc_after")),
         (r"\aucInvVoc", g(inv_voc, "auc_after")),
-        (r"\pesqInv", g(inv_mel, "pesq")),
-        (r"\pesqSurf", g(surf_mel, "pesq")),
-        (r"\pesqAudioseal", g(aseal_mel, "pesq")),
+        (r"\pesqInv", fnum(inv_mel["pesq"], 2) if inv_mel else "[n/a]"),
+        (r"\pesqSurf", fnum(surf_mel["pesq"], 2) if surf_mel else "[n/a]"),
+        (r"\pesqAudioseal", fnum(aseal_mel["pesq"], 2) if aseal_mel else "[n/a]"),
         (r"\ciAucInvMel", cinum(inv_mel, "auc_after_ci")),
         (r"\ciAucAudiosealMel", cinum(aseal_mel, "auc_after_ci")),
     ]
@@ -81,13 +81,15 @@ def main() -> None:
     atts = [a for a in ATT_ORDER if any(r["attacker"] == a for r in recs)]
     lines = [
         r"\begin{table}[t]", r"\centering",
-        r"\caption{Real speech ($N=%s$), detection AUC (separability) before$\to$after each "
-        r"blind channel; STFT$^\dagger$ is a near-lossless control, mel-GL and EnCodec (EnC$k$, "
-        r"$k$\,kbps) are lossy. The phase-domain \emph{surface} mark is erased on every channel; "
-        r"\emph{AudioSeal} resists EnCodec but is operationally defeated under mel-inversion "
-        r"(sign-inverted AUC $0.20$, TPR@1\%%FPR $0.03$); the \emph{invariant} mel mark's "
-        r"separability survives.}" % data["n_utt"],
-        r"\label{tab:e1}", r"\scriptsize", r"\setlength{\tabcolsep}{2.4pt}",
+        r"\caption{Real speech ($N=%s$), detection AUC \emph{after} each blind channel "
+        r"(all before-AUC $\approx1.00$ except the invariant mark, $0.94$). STFT$^\dagger$ is a "
+        r"near-lossless control; mel-GL, Vocos (neural vocoder) and EnCodec (EnC$k$, $k$\,kbps) "
+        r"are lossy. The phase-domain \emph{surface} mark is erased on every channel; "
+        r"\emph{AudioSeal} resists EnCodec but is defeated by the mel-inversion and the neural "
+        r"vocoder (AUC $0.15/0.33$, sign-inverted; TPR@1\%%FPR $0.04/0.05$); the \emph{invariant} "
+        r"mel mark's separability survives the vocoder and erodes under low-rate EnCodec.}"
+        % data["n_utt"],
+        r"\label{tab:e1}", r"\footnotesize", r"\setlength{\tabcolsep}{4pt}",
         r"\begin{tabular}{l" + "c" * len(atts) + r"}", r"\toprule",
         r"Watermark & " + " & ".join(ATT_LABEL.get(a, a) for a in atts) + r" \\",
         r"\midrule",
@@ -96,7 +98,7 @@ def main() -> None:
         cells = []
         for a in atts:
             r = find(recs, wm, a)
-            cells.append(f"{r['auc_before']:.2f}$\\to${r['auc_after']:.2f}" if r else "--")
+            cells.append(f"{r['auc_after']:.2f}" if r else "--")
         lines.append(f"{WM_LABEL.get(wm, wm)} & " + " & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
     (PAPER / "tab_e1.tex").write_text("\n".join(lines) + "\n")
