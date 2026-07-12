@@ -174,25 +174,28 @@ def make_figures(summary) -> None:
     fig.savefig(FIGDIR / "fig_e1_auc_before_after.pdf")
     plt.close(fig)
 
+    from scipy.optimize import curve_fit
     pb = summary["part_b"]
-    fig, ax = plt.subplots(figsize=(3.4, 2.7))
-    f = np.array([r["invariant_fraction"] for r in pb])
-    a_after = np.array([r["auc_after"] for r in pb])
-    a_before = np.array([r["auc_before"] for r in pb])
-    d0 = np.sqrt(2) * norm.ppf(min(0.999, float(np.median(a_before))))
-    fg = np.linspace(0, 1, 100)
-    ax.plot(fg, norm.cdf(np.sqrt(fg) * d0), "-", color="0.5", lw=1.1,
-            label=r"$\Phi(\sqrt{f}\,d_0)$", zorder=2)
-    ax.scatter(f, a_after, c="C0", s=34, zorder=3, label="mixture (mel-GL)")
-    # overlay the named marks under the lossy mel channel
-    gl_named = [r for r in recs if r["attacker"].startswith("mel")]
-    ax.scatter([r["invariant_fraction"] for r in gl_named],
-               [r["auc_after"] for r in gl_named], c="C3", marker="^", s=40,
-               zorder=4, label="named marks (GL)")
+    named = [r for r in recs if r["attacker"].startswith("mel")]
+    f_mix = np.array([r["invariant_fraction"] for r in pb])
+    a_mix = np.array([r["auc_after"] for r in pb])
+    f_nm = np.array([r["invariant_fraction"] for r in named])
+    a_nm = np.array([r["auc_after"] for r in named])
+    # Honest two-parameter converse fit AUC = Phi(a*sqrt(f)+b) over all mel-channel points.
+    f_all = np.concatenate([f_mix, f_nm])
+    a_all = np.clip(np.concatenate([a_mix, a_nm]), 1e-3, 1 - 1e-3)
+    model = lambda ff, aa, bb: norm.cdf(aa * np.sqrt(ff) + bb)
+    (a_hat, b_hat), _ = curve_fit(model, f_all, a_all, p0=[3.0, -2.0], maxfev=10000)
+    fig, ax = plt.subplots(figsize=(3.5, 2.7))
+    fg = np.linspace(f_all.min() * 0.95, 1.0, 100)
+    ax.plot(fg, model(fg, a_hat, b_hat), "-", color="0.5", lw=1.1,
+            label=r"$\Phi(a\sqrt{f}+b)$ fit", zorder=2)
+    ax.scatter(f_mix, a_mix, c="C0", s=34, zorder=3, label="mixture (mel-inv.)")
+    ax.scatter(f_nm, a_nm, c="C3", marker="^", s=44, zorder=4, label="named marks (mel-inv.)")
     ax.axhline(0.5, color="0.4", lw=0.8, ls=":")
-    ax.set_xlabel(r"invariant-energy fraction $f=\||S(x{+}\delta)|-|S(x)|\|^2/\|\Delta S\|^2$")
+    ax.set_xlabel(r"invariant-energy fraction $f$")
     ax.set_ylabel("detection AUC after laundering")
-    ax.set_ylim(0.45, 1.03)
+    ax.set_ylim(0.45, 1.02)
     ax.legend(frameon=False, fontsize=7, loc="lower right")
     fig.tight_layout()
     fig.savefig(FIGDIR / "fig_e1_auc_vs_fraction.pdf")

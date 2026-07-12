@@ -36,18 +36,21 @@ that the regenerated image is close to the clean one. Related image analyses (sp
 projection attacks; "when denoising becomes unsigning" for diffusion editing) study the
 same phenomenon in vision.
 
-*Difference (this is the crux of novelty):*
+*Difference.* The image community already has both the impossibility (Zhao et al.) **and** the
+positive prescription — Zhao et al. advocate embedding in preserved *semantic* content, and
+Tree-Ring (Wen et al., NeurIPS 2023) and Gaussian Shading (Yang et al., CVPR 2024) realize
+regeneration-robust semantic image watermarks. So "embed in what survives" is **not** unique to
+audio. What is new here is a **quantitative, provable** treatment for *speech*:
 
-| Axis | Image work (Zhao et al.) | This work (speech) |
+| Axis | Image work | This work (speech) |
 |---|---|---|
 | Imperceptibility | pixel `L2`/LPIPS | psychoacoustic masking + phase-insensitivity ⇒ a **structured, enormous** nullspace |
-| Attacker model | regeneration on a generic natural-image manifold | **analysis–resynthesis** `W=S∘A` with *named, estimable* invariants (content/speaker/prosody) |
-| Result | impossibility only (removable) | **matched converse *and* achievability**: exactly what survives (`row(A)`) and at what rate (`R*`) |
-| Prediction | watermark removable | *quantitative* surviving exponent `⅛‖Pδ‖²`; rate–survival curve verified on real speech |
+| Attacker model | diffusion/VAE regeneration | **analysis–resynthesis** `W=S∘A` with *named, estimable* invariants (content/speaker/prosody) |
+| What is provided | impossibility (Zhao); constructions (Tree-Ring, Gaussian Shading) | **matched converse *and* achievability** with an explicit surviving *rate* `R*` and exponent `⅛‖Pδ‖²` |
 
-A generic port of the image impossibility to audio would be stitching. The audio structure
-— resynthesis exposes a concrete invariant sub-channel — is what lets us state a **positive
-result the image papers cannot**: an invariant-aligned watermark that provably survives.
+Our contribution is the **rate/limit** (`R*`, the surviving exponent) for the speech resynthesis
+channel and its verification on real speech — not the qualitative "embed-in-what-survives" idea,
+which the image literature already has.
 
 ## 4. Information-theoretic watermarking (classical)
 
@@ -60,8 +63,8 @@ converse and a matching blind-detector rate `R*` specific to generative launderi
 
 ## Positioning sentence
 
-*We give the first signal-processing-theoretic account of why generative resynthesis
-launders speech watermarks — a data-processing converse that pinpoints the erased
-(nullspace) versus surviving (invariant) components — together with a matching achievable
-rate and an invariant-aligned scheme that realizes it, validated on real neural vocoders,
-codecs, and voice-conversion systems.*
+*We give a provable, quantitative signal-processing account of why analysis–resynthesis
+launders speech watermarks — a data-processing converse that pinpoints the erased (nullspace)
+versus surviving (invariant) components — together with a matching achievable rate `R*` and an
+invariant-aligned scheme that realizes it, validated on mel/STFT-spectrogram inversion and a
+neural codec (EnCodec).*

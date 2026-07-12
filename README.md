@@ -118,12 +118,21 @@ zero for the nullspace mark. (26/26 theorem tests green.)
 | **Invariant (mel)** | 0.94 → 0.93 | 0.94 → **0.93** | 0.74 / 0.67 / 0.60 |
 | AudioSeal (deployed) | 1.00 → 1.00 | 1.00 → **0.20** | 1.00 / 0.98 / 0.94 |
 
-(AUC before → after laundering.) The surface mark dies under every attacker; AudioSeal resists
-the codec it was hardened against but **collapses under the mel-vocoder** (bit-accuracy 0.48 ≈
-chance) — survival is attacker-specific and predicted by each mark's invariant-energy fraction.
-The invariant mark survives the mel-vocoder and degrades *gracefully* as the codec bandwidth
-(the invariant subspace) shrinks. Post-laundering AUC is a single monotone function of the
-invariant-energy fraction `f`, tracking the converse curve `Φ(√f · d₀)`.
+(AUC = separability, the primary metric — it is what the Chernoff exponent governs.) The surface
+mark dies under every attacker. **AudioSeal** resists the EnCodec it was hardened against but is
+**defeated operationally by mel-spectrogram inversion**: TPR@1%FPR 1.00→0.03 and payload
+bit-accuracy 0.48 (chance); its AUC of 0.20 is a sign-inversion (residual separability),
+consistent with its small but *nonzero* mel invariant-fraction 0.26. The **invariant mark's
+separability** survives the mel channel (AUC 0.94→0.93) and degrades *gracefully* as the codec
+bandwidth (invariant subspace) shrinks. Survival is channel-specific and predicted by each
+mark's invariant-energy fraction `f`; for a fixed channel, post-laundering AUC is monotone in
+`f`, well described by the converse's √f form `Φ(a√f+b)`.
+
+> **Honest caveats.** Our synthesizers are STFT/mel-spectrogram inversion (Griffin–Lim) and a
+> neural codec (EnCodec); a learned neural vocoder / voice conversion is future work. The
+> constructive invariant embedder is a proof-of-concept — strong in AUC but weak at a stringent
+> 1% FPR (TPR ≈ 0.11 even on clean audio); a learned embedder would tighten it. Marks are matched
+> by SNR (24 dB), not a perceptual metric (PESQ/ViSQOL) — a limitation we flag.
 
 **Achievability (E2).** A 16-bit invariant payload survives the mel-vocoder (bit-accuracy
 0.82 → 0.80 at 22 dB SNR, growing with budget), while a surface payload of equal size collapses

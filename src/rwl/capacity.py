@@ -145,13 +145,14 @@ def subspace_capacity(
     channel: ResynthesisChannel,
     masking: MaskingBudget,
     basis: np.ndarray,
-    host_var: float = 1.0,
 ) -> CapacityResult:
-    r"""Blind-detector payload capacity of the sub-channel spanned by ``basis`` after ``W``.
+    r"""Blind-detector achievable rate of the sub-channel spanned by ``basis`` after ``W``.
 
-    Only the invariant component of ``basis`` carries payload through ``W``; the reduced
-    masking metric is diagonalized and water-filled against the clean host (variance
-    ``host_var`` per orthonormal coordinate).
+    In the whitened model the clean host has unit variance per orthonormal coordinate, so
+    the surviving invariant sub-channel is the AWGN channel :math:`y=u+\eta`,
+    :math:`\eta\sim\N(0,I)`, with input cost :math:`\tr(M_{\mathrm{row}}Q)\le D`.  Only the
+    invariant component of ``basis`` carries payload through :math:`W`.  This is the rate of
+    a *blind* (non-informed) embedder; informed/dirty-paper coding could exceed it.
     """
     basis = np.asarray(basis, dtype=float)
     P, M = channel.P, masking.M
@@ -164,16 +165,15 @@ def subspace_capacity(
     if surv.shape[1] == 0:
         return CapacityResult(0.0, np.zeros(0), np.zeros(0))
     Mr = surv.T @ M @ surv
-    evals, U = linalg.eigh(0.5 * (Mr + Mr.T))
+    evals, _ = linalg.eigh(0.5 * (Mr + Mr.T))
     evals = np.clip(evals, 1e-12, None)
-    # Water-fill; host variance folds into the log via a change of the effective metric.
-    q = water_filling(evals / host_var, masking.D)
-    R = 0.5 * float(np.sum(np.log1p(q)))
+    q = water_filling(evals, masking.D)
+    R = 0.5 * float(np.sum(np.log1p(q)))    # unit-variance host: rate = 1/2 log(1+q_i)
     return CapacityResult(R, q, evals)
 
 
 def invariant_subchannel_capacity(
-    channel: ResynthesisChannel, masking: MaskingBudget, host_var: float = 1.0
+    channel: ResynthesisChannel, masking: MaskingBudget
 ) -> CapacityResult:
-    r"""Surviving payload capacity :math:`R^\*` of the full invariant subspace."""
-    return subspace_capacity(channel, masking, channel.row_basis(), host_var)
+    r"""Surviving blind-detector rate :math:`R^\*` of the full invariant subspace."""
+    return subspace_capacity(channel, masking, channel.row_basis())

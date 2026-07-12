@@ -110,14 +110,19 @@ of `A`, and its size is the invariant sub-channel capacity `R*`.
   `S` is stochastic with a temperature. `E4` measures how the converse degrades as these
   idealizations break (imperfect `A`, low-temperature `S`).
 - **Whitening / Gaussianity.** The surrogate is a modeling device for *validating* the
-  proofs; the DPI converse (Thm 1, first clause) holds for the general `W = S∘A` with no
-  Gaussian assumption, because Chernoff information obeys the DPI for any channel. The
-  Gaussian model supplies the exact constants and the achievability construction.
+  proofs. Monotonicity (DPI) holds for the general `W = S∘A` with no Gaussian assumption;
+  the *exact-zero* for `δ∈ker(A)` uses that `S` resamples the nullspace from the clean
+  conditional. The Gaussian model supplies the exact constants and the achievability
+  construction.
+- **`R*` is a blind-embedder rate**, not the watermarking capacity: it treats the clean host
+  as interference (no informed/dirty-paper coding), so informed embedding could exceed it.
 
 ## 6. What the experiments test
 
-- **E1** instantiates `A`, `S` with real neural vocoders/codecs/VC and shows open-source
-  post-hoc watermarks collapse to the `‖Pδ‖≈0` floor predicted by Thm 1.
-- **E2/E3** build an invariant-aligned watermark realizing `R*` (Thm 2) and trace the
-  rate–survival–imperceptibility surface where the converse and achievable rate meet.
+- **E1** instantiates `A`, `S` with STFT/mel-spectrogram inversion (Griffin–Lim) and the
+  EnCodec neural codec, and shows watermarks collapse when their energy lies in the channel's
+  nullspace — to the `‖Pδ‖≈0` floor predicted by Thm 1. (A learned neural vocoder / voice
+  conversion is future work.)
+- **E2** builds an invariant-aligned watermark realizing a surviving payload (Thm 2) and
+  traces the rate–survival–SNR relation where the converse and achievable rate meet.
 - **E4** stress-tests the idealizations (§5).
