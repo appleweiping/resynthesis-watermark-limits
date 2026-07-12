@@ -15,8 +15,8 @@ RES = ROOT / "results" / "e1_audio.json"
 PAPER = ROOT / "paper"
 
 # Attacker display names / ordering.
-ATT_ORDER = ["stft_gl", "mel80_gl", "encodec6k", "encodec3k", "encodec1.5k"]
-ATT_LABEL = {"stft_gl": "STFT$^\\dagger$", "mel80_gl": "mel-GL",
+ATT_ORDER = ["stft_gl", "mel80_gl", "vocos", "encodec6k", "encodec3k", "encodec1.5k"]
+ATT_LABEL = {"stft_gl": "STFT$^\\dagger$", "mel80_gl": "mel-GL", "vocos": "Vocos",
              "encodec6k": "EnC6", "encodec3k": "EnC3", "encodec1.5k": "EnC1.5"}
 WM_LABEL = {"surface_ss": "Surface (null)", "invariant_ss": "Invariant (mel)",
             "audioseal": "AudioSeal"}
@@ -44,6 +44,14 @@ def main() -> None:
     aseal_mel = find(recs, "audioseal", "mel80_gl")
     surf_mel = find(recs, "surface_ss", "mel80_gl")
     inv_mel = find(recs, "invariant_ss", "mel80_gl")
+    aseal_voc = find(recs, "audioseal", "vocos")
+    inv_voc = find(recs, "invariant_ss", "vocos")
+
+    def cinum(rec, ci_key):
+        if rec and ci_key in rec:
+            lo, hi = rec[ci_key]
+            return f"[{lo:.2f},{hi:.2f}]"
+        return ""
 
     macros = [
         (r"\audioNutt", str(data["n_utt"])),
@@ -57,6 +65,14 @@ def main() -> None:
         (r"\fracInv", g(inv_mel, "invariant_fraction", "0.0")),
         (r"\fracAudioseal", g(aseal_mel, "invariant_fraction", "0.0")),
         (r"\snrInv", f"{inv_mel['snr_db']:.0f}" if inv_mel else "24"),
+        # Round-2: neural vocoder + perceptual quality (guarded — emit only if present).
+        (r"\aucAudiosealVoc", g(aseal_voc, "auc_after")),
+        (r"\aucInvVoc", g(inv_voc, "auc_after")),
+        (r"\pesqInv", g(inv_mel, "pesq")),
+        (r"\pesqSurf", g(surf_mel, "pesq")),
+        (r"\pesqAudioseal", g(aseal_mel, "pesq")),
+        (r"\ciAucInvMel", cinum(inv_mel, "auc_after_ci")),
+        (r"\ciAucAudiosealMel", cinum(aseal_mel, "auc_after_ci")),
     ]
     (PAPER / "macros_audio.tex").write_text(
         "\n".join(f"\\newcommand{{{n}}}{{{v}}}" for n, v in macros) + "\n")

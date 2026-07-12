@@ -105,6 +105,11 @@ class PayloadSurface:
 def run(utts, device, snrs, nbits=16):
     gl = MelGriffinLim(device=device)
     attackers = [("clean", None), ("mel_gl", gl)]
+    try:
+        from attackers import NeuralVocoderAttacker
+        attackers.append(("vocos", NeuralVocoderAttacker(device=device)))
+    except Exception as exc:
+        print(f"[E2] Vocos unavailable: {exc}")
     for bw in (6.0, 3.0):
         try:
             attackers.append((f"encodec{bw:g}k", EncodecAttacker(bandwidth=bw, device=device)))
