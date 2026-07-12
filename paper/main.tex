@@ -218,8 +218,8 @@ captured by the mel envelope) is a signal-geometry analog of $\norm{P\delta}^2/\
 
 Table~\ref{tab:e1} reports AUC (separability, the quantity the Chernoff exponent governs) as the
 nullspace grows. Survival is set by the subspace each mark's \emph{detector} reads. The surface
-mark's waveform detector reads phase, so it is erased on \emph{every} channel (AUC$\to0.5$,
-TPR@1\%FPR$\to0$). AudioSeal's learned detector \emph{retains} separability under mel-inversion
+mark's waveform detector reads phase, so it is erased on \emph{every} channel (AUC$\to0.5$;
+TPR@1\%FPR $\to0$ under the lossy channels). AudioSeal's learned detector \emph{retains} separability under mel-inversion
 (oriented AUC $0.80$; the raw $\aucAudiosealMel$ is a sign-inversion) yet its \emph{calibrated}
 detector is defeated there (TPR@1\%FPR $1.00\!\to\!0.03$, payload $\bitaccAudiosealMel$ at
 chance), while it \emph{fully} resists the EnCodec it was hardened against ($0.99/0.98/0.94$
