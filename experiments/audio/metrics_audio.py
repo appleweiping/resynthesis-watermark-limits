@@ -108,3 +108,28 @@ def snr_db(clean: np.ndarray, perturbed: np.ndarray) -> float:
     ps = float(np.sum(clean ** 2)) + 1e-12
     pn = float(np.sum(noise ** 2)) + 1e-12
     return 10.0 * np.log10(ps / pn)
+
+
+def pesq_wb(clean: np.ndarray, perturbed: np.ndarray, sr: int = 16000) -> float:
+    """Wideband PESQ MOS-LQO (perceptual quality of the watermarked signal). NaN on failure."""
+    try:
+        from pesq import pesq
+        return float(pesq(sr, np.asarray(clean, dtype=np.float32),
+                          np.asarray(perturbed, dtype=np.float32), "wb"))
+    except Exception:
+        return float("nan")
+
+
+def auc_bootstrap_ci(scores_pos, scores_neg, n_boot: int = 1000, alpha: float = 0.05,
+                     rng: np.random.Generator | None = None):
+    """Percentile bootstrap CI for the AUC (resampling utterances with replacement)."""
+    rng = np.random.default_rng(0) if rng is None else rng
+    pos = np.asarray(scores_pos, dtype=float)
+    neg = np.asarray(scores_neg, dtype=float)
+    aucs = np.empty(n_boot)
+    for b in range(n_boot):
+        p = pos[rng.integers(0, pos.size, pos.size)]
+        n = neg[rng.integers(0, neg.size, neg.size)]
+        aucs[b] = empirical_auc(p, n)
+    lo, hi = np.quantile(aucs, [alpha / 2, 1 - alpha / 2])
+    return float(lo), float(hi)

@@ -29,10 +29,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from attackers import build_attackers, MelGriffinLim, StftGriffinLim
 from metrics_audio import (
+    auc_bootstrap_ci,
     bit_accuracy,
     detector_survival,
     empirical_auc,
     mel_invariant_fraction,
+    pesq_wb,
     snr_db,
     tpr_at_fpr,
 )
@@ -82,12 +84,15 @@ def part_a(utts, watermarks, attackers) -> list:
         xwm = [wm.embed(x, k) for x, k in zip(utts, keys)]
         ief = float(np.mean([mel_invariant_fraction(x, w) for x, w in zip(utts, xwm)]))
         snrs = float(np.mean([snr_db(x, w) for x, w in zip(utts, xwm)]))
+        pesq = float(np.nanmean([pesq_wb(x, w) for x, w in zip(utts, xwm)]))
         s_clean_b = [wm.score(x, k) for x, k in zip(utts, keys)]
         s_wm_b = [wm.score(w, k) for w, k in zip(xwm, keys)]
         auc_b = empirical_auc(s_wm_b, s_clean_b)
+        ci_b = auc_bootstrap_ci(s_wm_b, s_clean_b)
         gap_b = _mean_gap(s_wm_b, s_clean_b)
         base = {"watermark": wm.name, "invariant_fraction": ief, "snr_db": snrs,
-                "auc_before": auc_b, "tpr1_before": tpr_at_fpr(s_wm_b, s_clean_b)}
+                "pesq": pesq, "auc_before": auc_b, "auc_before_ci": ci_b,
+                "tpr1_before": tpr_at_fpr(s_wm_b, s_clean_b)}
         if isinstance(wm, AudioSealWatermark):
             base["bitacc_before"] = float(np.mean(
                 [bit_accuracy(*wm.bits(w, k)) for w, k in zip(xwm, keys)]))
@@ -99,6 +104,7 @@ def part_a(utts, watermarks, attackers) -> list:
             rec = dict(base)
             rec["attacker"] = att.name
             rec["auc_after"] = empirical_auc(s_wm_a, s_clean_a)
+            rec["auc_after_ci"] = auc_bootstrap_ci(s_wm_a, s_clean_a)
             rec["tpr1_after"] = tpr_at_fpr(s_wm_a, s_clean_a)
             rec["detector_survival"] = detector_survival(gap_b, _mean_gap(s_wm_a, s_clean_a))
             if isinstance(wm, AudioSealWatermark):

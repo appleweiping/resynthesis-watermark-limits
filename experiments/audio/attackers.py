@@ -83,6 +83,36 @@ class MelGriffinLim:
         return _fit(y.cpu().numpy(), len(wav))
 
 
+class NeuralVocoderAttacker:
+    """Real neural vocoder: A = the vocoder's mel, S = its learned decoder (Vocos).
+
+    Vocos is a high-fidelity GAN-based neural vocoder; unlike Griffin-Lim it *learns* to
+    resynthesize the waveform (phase and fine detail) from the mel envelope, so this is the
+    genuinely generative regime the theory targets.  Operates via 16->24->16 kHz resampling.
+    """
+
+    sample_rate = SR
+    name = "vocos"
+
+    def __init__(self, device: str = "cpu"):
+        import torchaudio
+        from vocos import Vocos
+        self.device = device
+        self.model = Vocos.from_pretrained("charactr/vocos-mel-24khz")
+        self.model = self.model.to(device).eval()
+        self.up = torchaudio.transforms.Resample(SR, 24000).to(device)
+        self.dn = torchaudio.transforms.Resample(24000, SR).to(device)
+
+    @torch.no_grad()
+    def apply(self, wav):
+        x = _t(wav, self.device).view(1, -1)
+        x24 = self.up(x)
+        mel = self.model.feature_extractor(x24)      # A: vocoder mel
+        y24 = self.model.decode(mel)                 # S: learned resynthesis
+        y = self.dn(y24).view(-1)
+        return _fit(y.cpu().numpy(), len(wav))
+
+
 class EncodecAttacker:
     """EnCodec 24 kHz neural-codec round-trip at a chosen bandwidth (kbps)."""
 
@@ -118,6 +148,10 @@ def build_attackers(device: str = "cpu", include_control: bool = True) -> list:
         att.append(MelGriffinLim(device=device))
     except Exception as exc:  # pragma: no cover
         print(f"[attackers] MelGriffinLim unavailable: {exc}")
+    try:
+        att.append(NeuralVocoderAttacker(device=device))
+    except Exception as exc:  # pragma: no cover
+        print(f"[attackers] NeuralVocoder (Vocos) unavailable: {exc}")
     for bw in (6.0, 3.0, 1.5):
         try:
             att.append(EncodecAttacker(bandwidth=bw, device=device))
