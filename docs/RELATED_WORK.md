@@ -1,70 +1,59 @@
-# Related work and differentiation
+# Related work and exact differentiation
 
-We separate three literatures and state precisely what is new here.
+What this project claims — and, just as importantly, what it does **not** claim —
+relative to each strand of prior work.
 
-## 1. Empirical audio watermarking (schemes)
+## 1. Empirical attack studies (the collapse is known)
 
-Neural and classical audio watermarks — **AudioSeal**, **WavMark**, **IDEAW**,
-**TriniMark**, **AWARE**, **FakeMark**, and psychoacoustic/spread-spectrum methods — embed
-a payload and report robustness to compression, noise, resampling, and filtering. These
-are *constructions*; none proves a fundamental limit, and (see §2) they are the objects
-our converse explains.
+- **O'Reilly et al., "Deep Audio Watermarks are Shallow"** (ICLR-W 2025): post-hoc
+  speech watermarks fail under reconstruction attacks.
+- **Wen et al., SoK** (arXiv:2503.19176): systematic benchmark; neural codecs are the
+  dominant threat.
+- **Ding et al., "Learning to Evade"** (arXiv:2606.22310): *adaptive* attacks — out of
+  scope for our model, and we say so explicitly.
 
-*Difference:* we do not propose another benchmark-chasing scheme. We prove **why** a broad
-class of these (post-hoc, imperceptibility-tuned) schemes must fail against resynthesis,
-and characterize what any scheme could retain.
+These document *that* watermarks fail. We provide a stated channel model in which the
+failure (and its exceptions) can be derived at the right level of generality, plus a
+measured predictor of *how much* separability survives.
 
-## 2. Attacks / SoK on audio watermark robustness
+## 2. Invariant/latent-aligned watermarks (the idea is established — NOT ours)
 
-Multiple 2024–2026 works show watermarks collapse under **neural regeneration**: vocoder
-resynthesis, neural-codec round-trips, and **self voice conversion** drive detection to
-near chance (e.g. reported AudioSeal accuracy of 0.09–0.28 under vocoder reconstruction).
-SoK-style studies conclude *no* audio watermark is robust across all transformation
-classes, and "post-hoc watermarks are shallow." Overwriting and re-watermarking attacks
-add further removal strategies.
+- **Latent-Mark** (arXiv:2603.05310): optimizes waveforms to shift codec latents;
+  cross-codec transfer; zero-bit.
+- **Feature-Aligned Speech Watermarking** (arXiv:2606.11828): watermark aligned to the
+  speech feature distribution for reconstruction robustness.
+- **VoiceMark** (Li et al., Interspeech 2025): speaker-latent marks robust to zero-shot VC.
+- **Images**: Zhao et al. (NeurIPS 2024) prove pixel-space removability and prescribe
+  semantic embedding; Tree-Ring and Gaussian Shading realize it.
 
-*Difference:* this literature documents the collapse **empirically, case by case**. We
-give the **missing theory**: the collapse is a data-processing inequality for the analysis
-map `A`, with the surviving detectability equal to `⅛‖Pδ‖²`. Our E1 reproduces the
-collapse and shows it lands at the theory's predicted floor — not merely "it drops."
+**Differentiation.** We do not claim invariant alignment as a contribution. What these
+method papers do not provide, and we do:
+1. a **general proposition** (Chernoff DPI + exact-erasure sufficient condition) that
+   scopes exactly what is guaranteed for *any* blind analysis–resynthesis channel;
+2. **closed-form** surviving shift/exponent in a stated surrogate (with its limits
+   stated);
+3. a **channel-relative, measurable survival predictor** validated on held-out,
+   speaker-disjoint data with competitor predictors and permutation controls;
+4. a **calibrated operational evaluation protocol** (independent calibration split,
+   raw-vs-oriented separation) that corrects measurement practices which conflate
+   score inversion with erasure.
 
-## 3. Provable watermark removal for images
+## 3. Classical watermarking theory (why R_LB is NOT capacity)
 
-Zhao et al., *"Invisible Image Watermarks Are Provably Removable Using Generative AI"*
-(NeurIPS 2024), prove diffusion/VAE regeneration removes pixel-space image watermarks and
-that the regenerated image is close to the clean one. Related image analyses (spectral
-projection attacks; "when denoising becomes unsigning" for diffusion editing) study the
-same phenomenon in vision.
+- **Costa (1983); Moulin–O'Sullivan (2003); Chen–Wornell QIM (2001)**: information-
+  hiding capacity with *informed* embedding against fixed/additive attack channels.
 
-*Difference.* The image community already has both the impossibility (Zhao et al.) **and** the
-positive prescription — Zhao et al. advocate embedding in preserved *semantic* content, and
-Tree-Ring (Wen et al., NeurIPS 2023) and Gaussian Shading (Yang et al., CVPR 2024) realize
-regeneration-robust semantic image watermarks. So "embed in what survives" is **not** unique to
-audio. What is new here is a **quantitative, provable** treatment for *speech*:
+Our `R_LB` is an achievable rate for **blind (host-uninformed) Gaussian embedders**
+against the resynthesis channel — a *lower bound only*. Informed embedding can exceed
+it; we prove **no rate converse**; we make **no capacity claim**. The classical results
+do not cover the resynthesis attack geometry; we do not cover their informed-embedder
+optimality. The two are complementary, and the paper says exactly this.
 
-| Axis | Image work | This work (speech) |
-|---|---|---|
-| Imperceptibility | pixel `L2`/LPIPS | psychoacoustic masking + phase-insensitivity ⇒ a **structured, enormous** nullspace |
-| Attacker model | diffusion/VAE regeneration | **analysis–resynthesis** `W=S∘A` with *named, estimable* invariants (content/speaker/prosody) |
-| What is provided | impossibility (Zhao); constructions (Tree-Ring, Gaussian Shading) | **matched converse *and* achievability** with an explicit surviving *rate* `R*` and exponent `⅛‖Pδ‖²` |
+## 4. What would falsify our empirical claim
 
-Our contribution is the **rate/limit** (`R*`, the surviving exponent) for the speech resynthesis
-channel and its verification on real speech — not the qualitative "embed-in-what-survives" idea,
-which the image literature already has.
-
-## 4. Information-theoretic watermarking (classical)
-
-Costa's "writing on dirty paper," Moulin–O'Sullivan information-theoretic watermarking, and
-QIM establish capacities under **fixed additive attacks** and (for informed embedding)
-host-cancellation. Our attacker is not additive: it is a **nonlinear projection onto a
-generative manifold**, and our detector is **blind** (host as interference). The novelty is
-locating watermark survivability in the geometry of the resynthesis map `A`, giving a DPI
-converse and a matching blind-detector rate `R*` specific to generative laundering.
-
-## Positioning sentence
-
-*We give a provable, quantitative signal-processing account of why analysis–resynthesis
-launders speech watermarks — a data-processing converse that pinpoints the erased (nullspace)
-versus surviving (invariant) components — together with a matching achievable rate `R*` and an
-invariant-aligned scheme that realizes it, validated on mel/STFT-spectrogram inversion and a
-neural codec (EnCodec).*
+The predictor study (E2) is designed so the answer could have been "no":
+- if post-attack oriented separability did not track the attacker's own analysis
+  sensitivity out-of-sample (Spearman ≈ 0, permutation p large), or
+- if generic budget measures (SNR) predicted survival equally well,
+the subspace picture would have no empirical content for real channels. Those are the
+comparisons we run and report, with CIs.
