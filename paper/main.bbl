@@ -75,6 +75,13 @@ Alexandre D{\'e}fossez, Jade Copet, Gabriel Synnaeve, and Yossi Adi,
 \newblock ``High fidelity neural audio compression,''
 \newblock {\em Transactions on Machine Learning Research (TMLR)}, 2023.
 
+\bibitem{siuzdak2024vocos}
+Hubert Siuzdak,
+\newblock ``{Vocos}: Closing the gap between time-domain and {F}ourier-based
+  neural vocoders for high-quality audio synthesis,''
+\newblock in {\em International Conference on Learning Representations (ICLR)},
+  2024.
+
 \bibitem{moulin2003information}
 Pierre Moulin and Joseph~A. O'Sullivan,
 \newblock ``Information-theoretic analysis of information hiding,''
