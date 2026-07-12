@@ -278,9 +278,12 @@ class KnnVcSelfAttacker(_Base):
         with tempfile.TemporaryDirectory() as td:
             p = os.path.join(td, "in.wav")
             sf.write(p, x, SR)
-            q = self.model.get_features(p)
-            m = self.model.get_matching_set([p])
-            y = self.model.match(q, m, topk=self.topk)
+            # vad_trigger_level=0 disables kNN-VC's silence trimming: manifest
+            # clips are already voice-active, and the VAD can trim low-energy
+            # clips to zero length (WavLM conv crash). Self matching set = the
+            # clip's own features (same semantics as get_matching_set([p])).
+            q = self.model.get_features(p, vad_trigger_level=0)
+            y = self.model.match(q, q, topk=self.topk)
         y = y.cpu().numpy().ravel()
         # level-match to the input so the channel effect is not confounded with gain
         rms_in = float(np.sqrt(np.mean(x**2)) + 1e-12)
@@ -294,7 +297,7 @@ class KnnVcSelfAttacker(_Base):
         with tempfile.TemporaryDirectory() as td:
             p = os.path.join(td, "in.wav")
             sf.write(p, x.detach().cpu().numpy().astype(np.float32), SR)
-            return self.model.get_features(p)
+            return self.model.get_features(p, vad_trigger_level=0)
 
 
 _FACTORIES = {
