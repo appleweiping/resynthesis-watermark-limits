@@ -4,7 +4,7 @@ Produces the paper's core theory figures directly from the linear-Gaussian surro
 
   fig_converse_collapse : post-laundering detection AUC vs the fraction of watermark
                           energy placed in the analysis nullspace (Theorem 1 in action).
-  fig_rate_survival     : surviving detection exponent and payload rate R* vs the
+  fig_rate_survival     : surviving detection exponent and payload rate lower bound R_LB vs the
                           imperceptibility budget, post-hoc vs invariant-aligned
                           (Theorem 1 floor meets Theorem 2 achievable rate).
   fig_theory_vs_sim     : simulated detector AUC vs the closed-form prediction across
@@ -57,7 +57,7 @@ def converse_collapse(rng: np.random.Generator) -> dict:
 
 
 def rate_survival(rng: np.random.Generator) -> dict:
-    """Surviving exponent and R* vs budget, for post-hoc vs invariant-aligned watermarks."""
+    """Surviving exponent and R_LB vs budget, for post-hoc vs invariant-aligned watermarks."""
     ch = ResynthesisChannel.from_random(n=32, k=10, rng=rng)
     w = np.exp(0.6 * rng.standard_normal(ch.n))  # non-isotropic masking
     Ds = np.geomspace(0.1, 10.0, 12)
@@ -175,7 +175,7 @@ def main() -> dict:
           round(conv["auc_after_emp"][-1], 4), "(chance)")
     print("[E0] converse: AUC(alpha=0) after =",
           round(conv["auc_after_emp"][0], 4), "(survives)")
-    print("[E0] rate: R*_invariant(maxD) =",
+    print("[E0] rate: R_LB_invariant(maxD) =",
           round(rate["Rlb_invariant_nats"][-1], 4), "nats; post-hoc = 0")
     print("[E0] theory-vs-sim: max abs err =", round(tvs["max_abs_err"], 4),
           "RMSE =", round(tvs["rmse"], 4))
