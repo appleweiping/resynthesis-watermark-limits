@@ -8,8 +8,8 @@ Robin San~Roman, Pierre Fernandez, Alexandre D{\'e}fossez, Teddy Furon, Tuan
 
 \bibitem{chen2023wavmark}
 Guangyu Chen, Yu~Wu, Shujie Liu, Tao Liu, Xiaoyong Du, and Furu Wei,
-\newblock ``{WavMark}: Watermarking for audio generation,''
-\newblock in {\em arXiv preprint arXiv:2308.12770}, 2023.
+\newblock ``{WavMark}: Watermarking for audio generation,'' 2023,
+\newblock arXiv:2308.12770.
 
 \bibitem{oreilly2025shallow}
 Patrick O'Reilly, Zeyu Jin, Jiaqi Su, and Bryan Pardo,
@@ -20,8 +20,8 @@ Patrick O'Reilly, Zeyu Jin, Jiaqi Su, and Bryan Pardo,
 \bibitem{liu2025sok}
 Yizhu Liu et~al.,
 \newblock ``{SoK}: How robust is audio watermarking in generative {AI}
-  models?,''
-\newblock {\em arXiv preprint arXiv:2503.19176}, 2025.
+  models?,'' 2025,
+\newblock arXiv:2503.19176.
 
 \bibitem{zhao2024invisible}
 Xuandong Zhao, Kexun Zhang, Zihao Su, Saastha Vasan, Ilya Grishchenko,

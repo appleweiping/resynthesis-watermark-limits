@@ -103,15 +103,39 @@ uv run python experiments/run_all.py       # regenerates all paper figures/numbe
 Empirical audio experiments (E1–E4) additionally require `".[audio]"` and pretrained generators; see
 [`experiments/README.md`](experiments/README.md) for the GPU workflow.
 
+## Results at a glance
+
+**Surrogate (E0, CPU).** As a watermark drifts from the invariant subspace into `ker(A)`,
+post-laundering AUC falls from 0.89 to 0.50 (chance), matching the closed form to RMSE 0.001;
+surviving detection exponent and rate `R*` are positive for the invariant mark and identically
+zero for the nullspace mark. (26/26 theorem tests green.)
+
+**Real speech (E1, LibriSpeech test-clean, N=80).** Attackers sweep the size of `ker(A)`:
+
+| Watermark | STFT-GL (control, phase-only null) | mel-GL (lossy) | EnCodec 6k / 3k / 1.5k |
+|---|---|---|---|
+| Surface (nullspace) | 1.00 → 0.48 | 1.00 → 0.44 | 0.53 / 0.54 / 0.56 |
+| **Invariant (mel)** | 0.94 → 0.93 | 0.94 → **0.93** | 0.74 / 0.67 / 0.60 |
+| AudioSeal (deployed) | 1.00 → 1.00 | 1.00 → **0.20** | 1.00 / 0.98 / 0.94 |
+
+(AUC before → after laundering.) The surface mark dies under every attacker; AudioSeal resists
+the codec it was hardened against but **collapses under the mel-vocoder** (bit-accuracy 0.48 ≈
+chance) — survival is attacker-specific and predicted by each mark's invariant-energy fraction.
+The invariant mark survives the mel-vocoder and degrades *gracefully* as the codec bandwidth
+(the invariant subspace) shrinks. Post-laundering AUC is a single monotone function of the
+invariant-energy fraction `f`, tracking the converse curve `Φ(√f · d₀)`.
+
+**Achievability (E2).** A 16-bit invariant payload survives the mel-vocoder (bit-accuracy
+0.82 → 0.80 at 22 dB SNR, growing with budget), while a surface payload of equal size collapses
+from perfect (1.00) to chance (0.50).
+
 ## Status
 
-🚧 **Under active construction.** Milestones:
-
-- [ ] Theory core + Monte-Carlo tests (Thm 1 converse, DPI monotonicity, Thm 2 achievability)
-- [ ] E1 converse validation (post-hoc watermarks collapse to the predicted floor)
-- [ ] E2/E3 achievability (invariant-aligned watermarker survives; rate–survival curves)
-- [ ] Paper (spconf, ≤4+1 pp, 0 overfull, verified refs)
-- [ ] Adversarial multi-agent polish pass
+- [x] Theory core + Monte-Carlo tests (Thm 1 converse, DPI monotonicity, Thm 2 achievability) — 26/26 green
+- [x] E1 converse validation on real speech (3 attacker families, N=80)
+- [x] E2 achievability (invariant payload survives; surface payload dies)
+- [x] Paper (spconf, 4 pp, 0 overfull, verified refs)
+- [ ] Adversarial multi-agent polish pass (in progress)
 
 ## Citation
 

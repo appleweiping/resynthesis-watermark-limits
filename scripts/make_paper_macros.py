@@ -16,8 +16,8 @@ PAPER = ROOT / "paper"
 
 # Attacker display names / ordering.
 ATT_ORDER = ["stft_gl", "mel80_gl", "encodec6k", "encodec3k", "encodec1.5k"]
-ATT_LABEL = {"stft_gl": "STFT-GL (control)", "mel80_gl": "mel-GL",
-             "encodec6k": "EnC-6k", "encodec3k": "EnC-3k", "encodec1.5k": "EnC-1.5k"}
+ATT_LABEL = {"stft_gl": "STFT$^\\dagger$", "mel80_gl": "mel-GL",
+             "encodec6k": "EnC6", "encodec3k": "EnC3", "encodec1.5k": "EnC1.5"}
 WM_LABEL = {"surface_ss": "Surface (null)", "invariant_ss": "Invariant (mel)",
             "audioseal": "AudioSeal"}
 
@@ -66,10 +66,10 @@ def main() -> None:
     lines = [
         r"\begin{table}[t]", r"\centering",
         r"\caption{Real speech (LibriSpeech, $N=%s$). Detection AUC before$\to$after each "
-        r"blind resynthesis attacker. STFT-GL is a near-lossless control (tiny nullspace); "
-        r"mel-GL and EnCodec are lossy (large nullspace). Surface/AudioSeal (energy in the "
+        r"blind attacker. STFT$^\dagger$ is a near-lossless control (nullspace $=$ phase only); "
+        r"mel-GL and EnCodec (EnC$k$, $k$\,kbps) are lossy. Surface/AudioSeal (energy in the "
         r"nullspace) collapse to chance; the invariant mel mark survives.}" % data["n_utt"],
-        r"\label{tab:e1}", r"\footnotesize", r"\setlength{\tabcolsep}{3.5pt}",
+        r"\label{tab:e1}", r"\scriptsize", r"\setlength{\tabcolsep}{2.4pt}",
         r"\begin{tabular}{l" + "c" * len(atts) + r"}", r"\toprule",
         r"Watermark & " + " & ".join(ATT_LABEL.get(a, a) for a in atts) + r" \\",
         r"\midrule",

@@ -168,10 +168,9 @@ Spending the budget on a preserved invariant instead of the nullspace lets the w
 through $\mathcal S$.
 \begin{theorem}[Invariant sub-channel]
 \label{thm:achieve}
-The best surviving detection exponent under the budget is
-$\max_{\delta^\top M\delta\le D}\tfrac18\norm{P\delta}^2=\tfrac{D}{8}\,\lambda_{\max}(P,M)$,
-attained at the top generalized eigenvector of $(P,M)$; it is $0$ when $\delta$ is confined to
-$\ker\A$. For payload, encoding a message as a surviving shift $u=P\delta\in\mathrm{row}(\A)$
+Under the budget, the best surviving exponent is
+$\max_{\delta^\top M\delta\le D}\tfrac18\norm{P\delta}^2=\tfrac{D}{8}\lambda_{\max}(P,M)$, at the
+top generalized eigenvector of $(P,M)$; it is $0$ when $\delta\in\ker\A$. For payload, encoding a message as a surviving shift $u=P\delta\in\mathrm{row}(\A)$
 and facing the clean host as interference ($y=u+\eta$, $\eta\sim\N(0,I)$) gives surviving rate
 \begin{equation}
 \Rstar=\max_{\tr(M_{\mathrm{row}}Q)\le D}\tfrac12\log\det(I+Q),

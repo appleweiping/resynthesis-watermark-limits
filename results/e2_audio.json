@@ -1,0 +1,167 @@
+{
+  "nbits": 16,
+  "curves": {
+    "magnitude": [
+      {
+        "snr_db": 37,
+        "bitacc_gl": 0.5375,
+        "bitacc_clean": 0.5416666666666666
+      },
+      {
+        "snr_db": 34,
+        "bitacc_gl": 0.590625,
+        "bitacc_clean": 0.5979166666666667
+      },
+      {
+        "snr_db": 31,
+        "bitacc_gl": 0.61875,
+        "bitacc_clean": 0.621875
+      },
+      {
+        "snr_db": 28,
+        "bitacc_gl": 0.6572916666666667,
+        "bitacc_clean": 0.6572916666666667
+      },
+      {
+        "snr_db": 25,
+        "bitacc_gl": 0.7083333333333334,
+        "bitacc_clean": 0.7197916666666667
+      },
+      {
+        "snr_db": 22,
+        "bitacc_gl": 0.8041666666666667,
+        "bitacc_clean": 0.821875
+      }
+    ],
+    "surface": [
+      {
+        "snr_db": 37,
+        "bitacc_gl": 0.5364583333333334,
+        "bitacc_clean": 1.0
+      },
+      {
+        "snr_db": 34,
+        "bitacc_gl": 0.475,
+        "bitacc_clean": 1.0
+      },
+      {
+        "snr_db": 31,
+        "bitacc_gl": 0.4979166666666667,
+        "bitacc_clean": 1.0
+      },
+      {
+        "snr_db": 28,
+        "bitacc_gl": 0.5072916666666667,
+        "bitacc_clean": 1.0
+      },
+      {
+        "snr_db": 25,
+        "bitacc_gl": 0.5260416666666666,
+        "bitacc_clean": 1.0
+      },
+      {
+        "snr_db": 22,
+        "bitacc_gl": 0.51875,
+        "bitacc_clean": 1.0
+      }
+    ]
+  },
+  "table": [
+    {
+      "watermark": "magnitude",
+      "snr_db": 37,
+      "bitacc_clean": 0.5416666666666666,
+      "bitacc_mel_gl": 0.5375,
+      "bitacc_encodec6k": 0.525,
+      "bitacc_encodec3k": 0.509375
+    },
+    {
+      "watermark": "surface",
+      "snr_db": 37,
+      "bitacc_clean": 1.0,
+      "bitacc_mel_gl": 0.5364583333333334,
+      "bitacc_encodec6k": 0.496875,
+      "bitacc_encodec3k": 0.509375
+    },
+    {
+      "watermark": "magnitude",
+      "snr_db": 34,
+      "bitacc_clean": 0.5979166666666667,
+      "bitacc_mel_gl": 0.590625,
+      "bitacc_encodec6k": 0.540625,
+      "bitacc_encodec3k": 0.5385416666666667
+    },
+    {
+      "watermark": "surface",
+      "snr_db": 34,
+      "bitacc_clean": 1.0,
+      "bitacc_mel_gl": 0.475,
+      "bitacc_encodec6k": 0.5333333333333333,
+      "bitacc_encodec3k": 0.496875
+    },
+    {
+      "watermark": "magnitude",
+      "snr_db": 31,
+      "bitacc_clean": 0.621875,
+      "bitacc_mel_gl": 0.61875,
+      "bitacc_encodec6k": 0.5479166666666667,
+      "bitacc_encodec3k": 0.5270833333333333
+    },
+    {
+      "watermark": "surface",
+      "snr_db": 31,
+      "bitacc_clean": 1.0,
+      "bitacc_mel_gl": 0.4979166666666667,
+      "bitacc_encodec6k": 0.503125,
+      "bitacc_encodec3k": 0.48854166666666665
+    },
+    {
+      "watermark": "magnitude",
+      "snr_db": 28,
+      "bitacc_clean": 0.6572916666666667,
+      "bitacc_mel_gl": 0.6572916666666667,
+      "bitacc_encodec6k": 0.5677083333333334,
+      "bitacc_encodec3k": 0.5541666666666667
+    },
+    {
+      "watermark": "surface",
+      "snr_db": 28,
+      "bitacc_clean": 1.0,
+      "bitacc_mel_gl": 0.5072916666666667,
+      "bitacc_encodec6k": 0.5072916666666667,
+      "bitacc_encodec3k": 0.48541666666666666
+    },
+    {
+      "watermark": "magnitude",
+      "snr_db": 25,
+      "bitacc_clean": 0.7197916666666667,
+      "bitacc_mel_gl": 0.7083333333333334,
+      "bitacc_encodec6k": 0.596875,
+      "bitacc_encodec3k": 0.565625
+    },
+    {
+      "watermark": "surface",
+      "snr_db": 25,
+      "bitacc_clean": 1.0,
+      "bitacc_mel_gl": 0.5260416666666666,
+      "bitacc_encodec6k": 0.5052083333333334,
+      "bitacc_encodec3k": 0.509375
+    },
+    {
+      "watermark": "magnitude",
+      "snr_db": 22,
+      "bitacc_clean": 0.821875,
+      "bitacc_mel_gl": 0.8041666666666667,
+      "bitacc_encodec6k": 0.6625,
+      "bitacc_encodec3k": 0.625
+    },
+    {
+      "watermark": "surface",
+      "snr_db": 22,
+      "bitacc_clean": 1.0,
+      "bitacc_mel_gl": 0.51875,
+      "bitacc_encodec6k": 0.5104166666666666,
+      "bitacc_encodec3k": 0.48020833333333335
+    }
+  ]
+}
