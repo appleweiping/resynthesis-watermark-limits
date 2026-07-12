@@ -45,6 +45,28 @@ def load(name: str) -> dict:
     return json.loads(p.read_text(encoding="utf-8"))
 
 
+def load_e1() -> dict:
+    """Load results/e1_survival.json or merge sharded e1_survival_<baseline>.json."""
+    p = ROOT / "results" / "e1_survival.json"
+    if p.exists():
+        return json.loads(p.read_text(encoding="utf-8"))
+    shards = sorted((ROOT / "results").glob("e1_survival_*.json"))
+    if not shards:
+        raise SystemExit("FATAL: no e1_survival results — run E1 first")
+    merged = None
+    for s in shards:
+        d = json.loads(s.read_text(encoding="utf-8"))
+        if merged is None:
+            merged = d
+        else:
+            merged["rows"].extend(d["rows"])
+            merged["attack_severity"].update(d.get("attack_severity", {}))
+            if d["n_test"] != merged["n_test"]:
+                raise SystemExit(f"FATAL: shard {s.name} n_test={d['n_test']} != "
+                                 f"{merged['n_test']} — shards not comparable")
+    return merged
+
+
 def macros(e1: dict, e2: dict, e3: dict) -> list[str]:
     ev = e2["evaluation"]["pred_sensitivity"]
     perm = e2["permutation"]["pred_sensitivity"]
@@ -117,7 +139,7 @@ def e1_table(e1: dict) -> list[str]:
 
 
 def main() -> None:
-    e1, e2, e3 = (load("e1_survival.json"), load("e2_predictor.json"),
+    e1, e2, e3 = (load_e1(), load("e2_predictor.json"),
                   load("e3_payload_poc.json"))
     (PAPER / "macros_audio.tex").write_text(
         "\n".join(macros(e1, e2, e3)) + "\n", encoding="utf-8")

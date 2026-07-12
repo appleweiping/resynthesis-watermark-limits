@@ -48,6 +48,8 @@ def main() -> None:
     ap.add_argument("--baselines", default=",".join(DEFAULT_BASELINES))
     ap.add_argument("--n-test", type=int, default=1000)
     ap.add_argument("--n-calib", type=int, default=5000)
+    ap.add_argument("--n-calib-attacked", type=int, default=1000,
+                    help="attacked-calibration subset (recalibration diagnostic)")
     ap.add_argument("--keys", type=int, default=2, help="independent keys per clip")
     ap.add_argument("--pesq-target", type=float, default=4.2)
     ap.add_argument("--strict", action="store_true", default=True)
@@ -97,12 +99,12 @@ def main() -> None:
             cs = np.array([b.score(x, key) for x in calib])
             calib_scores[(b.name, key, "clean")] = cs
     for att in attackers:
-        attacked_calib = [att.apply(x) for x in calib[:1500]]  # diagnostic subset
+        attacked_calib = [att.apply(x) for x in calib[:args.n_calib_attacked]]
         for b in baselines:
             for key in keys:
                 calib_scores[(b.name, key, att.name)] = np.array(
                     [b.score(y, key) for y in attacked_calib])
-        print(f"[E1] calibration attacked scored: {att.name}")
+        print(f"[E1] calibration attacked scored: {att.name}", flush=True)
 
     # ---- test loop ---------------------------------------------------------------
     # cache attacked clean clips per attacker (shared negatives)

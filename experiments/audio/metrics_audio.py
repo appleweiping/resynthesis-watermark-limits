@@ -134,14 +134,20 @@ def full_detection_report(
         "target_fpr": target_fpr,
     }
     if calib_neg_attacked is not None and len(calib_neg_attacked):
-        thr2 = threshold_at_fpr(np.asarray(calib_neg_attacked, float), target_fpr)
-        # orientation-aware recalibration: if the score inverted, flip both sides
-        if out["sign_inverted"]:
-            thr2f = threshold_at_fpr(-np.asarray(calib_neg_attacked, float), target_fpr)
-            op2 = operating_point(-test_neg, -test_pos, thr2f)
-        else:
-            op2 = operating_point(test_neg, test_pos, thr2)
-        out["recalibrated_diagnostic"] = op2
+        ca = np.asarray(calib_neg_attacked, float)
+        if len(ca) >= 500:
+            # DIAGNOSTIC ONLY (labeled as such): a smaller attacked-calibration
+            # subset is tolerated here at a laxer 2% FPR floor; the PRIMARY
+            # operating point above always uses the full clean calibration set.
+            diag_fpr = max(target_fpr, 10.0 / len(ca))
+            if out["sign_inverted"]:
+                thr2 = float(np.quantile(-ca, 1.0 - diag_fpr, method="higher"))
+                op2 = operating_point(-test_neg, -test_pos, thr2)
+            else:
+                thr2 = float(np.quantile(ca, 1.0 - diag_fpr, method="higher"))
+                op2 = operating_point(test_neg, test_pos, thr2)
+            op2["diag_fpr"] = diag_fpr
+            out["recalibrated_diagnostic"] = op2
     return out
 
 
