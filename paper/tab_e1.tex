@@ -1,13 +1,13 @@
 % AUTO-GENERATED: raw AUC / oriented AUC / TPR@1%FPR (calib.-fixed threshold)
 \begin{table*}[t]\centering
-\caption{Deployed watermarks under analysis--resynthesis at matched median PESQ. Cells: oriented AUC\,/\,TPR\,/\,\emph{achieved} FPR at the 1\%-FPR threshold fixed on the independent calibration split ($n=1928$ clean negatives). Two failure modes appear: \emph{erasure} (AUC$\to$0.5, TPR$\to$0) and \emph{calibration failure} (separability retained but the fixed threshold's false-alarm rate explodes on attacked clean audio).}
+\caption{Deployed watermarks under analysis--resynthesis at matched median PESQ. Cells: oriented AUC\,/\,TPR\,/\,\emph{achieved} FPR at the 1\%-FPR threshold fixed on the independent calibration split ($n=7157$ clean negatives). Two failure modes appear: \emph{erasure} (AUC$\to$0.5, TPR$\to$0) and \emph{calibration failure} (separability retained but the fixed threshold's false-alarm rate explodes on attacked clean audio).}
 \label{tab:e1}\footnotesize\setlength{\tabcolsep}{3.2pt}
 \begin{tabular}{lccccccccccc}
 \toprule
 Baseline & clean & STFT$^\dagger$ & mel-inv & Vocos & Vc-EnC & EnC6 & EnC3 & DAC & SNAC & VC$_4$ & VC$_8$ \\
 \midrule
-AudioSeal & 1.00/1.00/0.02 & 0.99/0.93/0.01 & 0.57/0.02/0.01 & 0.63/0.10/0.01 & 0.52/0.01/0.01 & 0.93/0.99/0.80 & 0.81/0.98/0.87 & 0.93/0.71/0.02 & 0.50/0.01/0.01 & 0.51/0.02/0.03 & 0.51/0.03/0.04 \\
-SilentCipher & 0.99/0.98/0.00 & 0.95/0.90/0.00 & 0.50/0.00/0.01 & 0.50/0.01/0.00 & 0.50/0.01/0.00 & 0.50/0.00/0.00 & 0.50/0.00/0.01 & 0.50/0.01/0.01 & 0.50/0.00/0.01 & 0.50/0.00/0.00 & 0.50/0.01/0.00 \\
+AudioSeal & 1.00/1.00/0.01 & 0.99/0.90/0.00 & 0.57/0.01/0.00 & 0.63/0.07/0.01 & 0.52/0.01/0.00 & 0.93/0.99/0.73 & 0.81/0.97/0.80 & 0.93/0.64/0.01 & 0.50/0.00/0.00 & 0.51/0.01/0.01 & 0.51/0.02/0.02 \\
+SilentCipher & 0.99/0.98/0.00 & 0.95/0.90/0.00 & 0.50/0.00/0.01 & 0.50/0.01/0.00 & 0.50/0.01/0.00 & 0.50/0.00/0.00 & 0.50/0.00/0.01 & 0.50/0.01/0.01 & 0.50/0.00/0.01 & 0.50/0.00/0.01 & 0.50/0.01/0.01 \\
 \bottomrule
 \end{tabular}
 \end{table*}

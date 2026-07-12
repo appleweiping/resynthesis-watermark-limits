@@ -168,6 +168,15 @@ def macros(e1: dict, e2: dict, e3: dict) -> list[str]:
         f"\\newcommand{{\\pocBits}}{{{e3['bits']}}}",
         f"\\newcommand{{\\pocPesq}}{{{f2(e3['pesq_median'])}}}",
     ]
+    # seed replication (independent manifests), if the seed runs exist
+    for i, seed in enumerate(("seed1", "seed2")):
+        p = ROOT / "results" / f"e2_predictor_{seed}.json"
+        if p.exists():
+            ds = json.loads(p.read_text(encoding="utf-8"))
+            rho = ds["permutation_auc_mel"]["pred_sensitivity"][
+                "observed_within_spearman"]
+            lines.append(
+                f"\\newcommand{{\\withinRhoSeed{'AB'[i]}}}{{{f2(rho)}}}")
     # per-attacker within-Spearman (mel-probe detectability); LaTeX macro names
     # cannot contain digits, so attacker names map to letter-only keys.
     keymap = {"mel80_gl": "melgl", "vocos": "vocos", "encodec6k": "encodec",
