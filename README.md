@@ -3,46 +3,47 @@
 **The Resynthesis Channel — Fundamental Limits of Speech Watermarking Against Generative Laundering.**
 
 A complete, reproducible signal-processing-theory research project (targeting the IEEE ICASSP
-*Signal Processing Theory & Methods* / *Information Forensics & Security* tracks). The **theory and
-every theory-validation experiment are CPU-only and fully reproducible**; the empirical
-instantiation on real speech uses pretrained neural generators and one small trained watermarker on
-a **GPU**. Every theorem in the paper is cross-checked against Monte-Carlo simulation by the test
-suite **before** it is allowed into the manuscript.
+*Signal Processing Theory & Methods* / *Information Forensics & Security* tracks; ICASSP 2027
+deadline Sept 2026). The **theory and every theory-validation experiment are CPU-only and fully
+reproducible**; the real-speech instantiation uses pretrained neural generators and a constructive
+invariant-aligned scheme on a **GPU**. Every theorem is cross-checked against Monte-Carlo
+simulation by the test suite **before** it is allowed into the manuscript.
 
-> **TL;DR** — Every audio watermark on the market (AudioSeal, WavMark, …) is silently erased when an
-> attacker simply runs the audio through a neural vocoder, codec, or voice-conversion model. The
-> whole field has documented this collapse **empirically**, over and over — but nobody has explained
-> *why*, or *what could possibly survive*. We give the missing theory. Model the attacker as a
-> **resynthesis channel** `W = S∘A`: an *analysis* map `A` that keeps only the perceptual invariants
-> of speech (linguistic content, speaker identity, prosody), followed by a *synthesis* map `S` that
-> re-generates the waveform. Two matched results follow:
+> **TL;DR** — Audio watermarks (AudioSeal, WavMark, …) are increasingly erased when an attacker
+> regenerates the audio through a vocoder or codec; the field documents this collapse **empirically**
+> but, for speech, has no theory of *which* watermarks die, under *which* attacker, or *what
+> survives*. We give it. Model the attacker as a **resynthesis channel** `W = S∘A`: an *analysis*
+> map `A` that keeps only the perceptual invariants of speech (content, speaker, prosody), followed
+> by a *synthesis* map `S` that re-generates the waveform. Two matched results:
 >
-> - **Converse (impossibility).** By a data-processing inequality, any watermark whose signal lives
->   in the **nullspace of `A`** — phase, psychoacoustically-masked spectral regions, the parts a
->   listener can't hear — has a post-attack detection error-exponent of **exactly zero**. It is
->   provably laundered. Because masking + phase-insensitivity make that nullspace *enormous*, this is
->   exactly where post-hoc watermarks hide, which is why they all die.
+> - **Converse.** By a data-processing inequality, any watermark whose signal lives in the
+>   **nullspace of `A`** — phase, psychoacoustically-masked regions — has a post-attack detection
+>   error-exponent of **exactly zero**. Because masking + phase-insensitivity make that nullspace
+>   *enormous*, this is exactly where post-hoc watermarks hide, which is why they are laundered.
 > - **Achievability (what survives).** Spend the imperceptibility budget on a *preserved invariant*
->   instead, and the watermark rides through `S`. The maximal surviving payload is
->   **R\* = the capacity of the invariant sub-channel**. We give a matching invariant-aligned scheme
->   that realizes a positive rate against all three attacker families.
+>   instead, and the watermark rides through `S`. The surviving payload is **R\* = the invariant
+>   sub-channel's (blind-embedder) rate**; a constructive invariant-aligned scheme realizes it.
 >
 > The upshot is a **predictive theory**: from where a watermark places its energy relative to `A`,
-> we predict whether it survives generative laundering and at what rate — and the measured numbers
-> track the bound.
+> we predict whether it survives generative laundering and at what rate — and, for a fixed channel,
+> the measured numbers track the bound.
 
 ---
 
 ## Why this is new (and not a re-skin of the image result)
 
-Regeneration attacks are known to *provably* remove **image** watermarks
-([Zhao et al., NeurIPS 2024](https://arxiv.org/abs/2306.01953)). Audio is **not** a port:
+The image domain already has both an impossibility (regeneration provably removes image
+watermarks, [Zhao et al., NeurIPS 2024](https://arxiv.org/abs/2306.01953)) **and** the positive
+prescription (embed in preserved *semantic* content — Tree-Ring, Gaussian Shading). So
+"embed-in-what-survives" is not unique to audio. What is new here is a **provable, quantitative**
+treatment for *speech* — an explicit surviving **rate `R*`** and exponent — tied to audio's
+concrete invariants:
 
-| | Images (prior work) | Speech (this work) |
+| | Image work | Speech (this work) |
 |---|---|---|
 | Imperceptibility model | pixel `L2` / LPIPS | **psychoacoustic masking + phase-insensitivity** → a huge inaudible nullspace |
-| Attacker | diffusion / VAE regeneration on a generic natural-image manifold | **analysis–resynthesis** with *concrete, measurable* preserved invariants (content/speaker/prosody) |
-| Result available | impossibility only (watermark removable) | **matched converse *and* achievability** — we characterize *what survives and at what rate* |
+| Attacker | diffusion / VAE regeneration | **analysis–resynthesis** with *concrete, measurable* preserved invariants (content/speaker/prosody) |
+| What is provided | impossibility (Zhao); constructions (Tree-Ring, Gaussian Shading) | **matched converse *and* achievability** with an explicit surviving *rate* `R*` |
 
 That structure — speech resynthesis exposes a **named, estimable** invariant sub-channel — is what
 lets us prove a positive result the image papers cannot state. See
