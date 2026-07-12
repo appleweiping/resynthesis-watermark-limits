@@ -148,10 +148,11 @@ from perfect (1.00) to chance (0.50).
 ## Status
 
 - [x] Theory core + Monte-Carlo tests (Thm 1 converse, DPI monotonicity, Thm 2 achievability) — 26/26 green
-- [x] E1 converse validation on real speech (3 attacker families, N=80)
-- [x] E2 achievability (invariant payload survives; surface payload dies)
+- [x] E1 converse validation on real speech (STFT/mel inversion, **neural vocoder (Vocos)**, EnCodec; N=80)
+- [x] E2 achievability (invariant payload survives both vocoders; surface payload dies)
+- [x] PESQ perceptual quality + bootstrap AUC confidence intervals
 - [x] Paper (spconf, 4 pp, 0 overfull, verified refs)
-- [ ] Adversarial multi-agent polish pass (in progress)
+- [x] Adversarial multi-agent polish — **4 rounds, converged clean** (r1: 8 majors → r4: 0 findings)
 
 ## Citation
 
