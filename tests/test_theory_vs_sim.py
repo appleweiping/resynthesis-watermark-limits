@@ -1,7 +1,7 @@
-"""End-to-end: the closed-form ROC predicts the simulated detector across seeds.
+"""End-to-end surrogate check: the closed-form ROC matches the simulated detector.
 
-This is the manuscript gate for the headline claim — the theory *predicts the measured
-numbers*, before and after laundering, for both watermark families.
+This validates the numerical implementation against the surrogate's closed forms
+across seeds.  It says nothing about real attackers — that is the experiments' job.
 """
 
 import numpy as np

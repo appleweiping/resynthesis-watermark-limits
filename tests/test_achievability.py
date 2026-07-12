@@ -1,16 +1,18 @@
-"""Theorem 2 (achievability): what survives, and at what rate.
+"""Surrogate sanity checks: surviving exponent and the achievable lower bound R_LB.
 
-An invariant-aligned watermark keeps a positive post-laundering detection exponent and a
-positive payload rate R*, while a nullspace watermark's surviving rate is exactly zero.
-The two theorems meet: survivable = non-nullspace of A.
+These tests verify the numerical implementation against the closed-form surrogate
+quantities (they validate the code, not the model). An invariant-aligned watermark
+keeps a positive post-laundering detection exponent and a positive achievable rate
+R_LB, while a nullspace watermark's surviving R_LB is exactly zero. No capacity or
+rate-converse claim is made.
 """
 
 import numpy as np
 import pytest
 
 from rwl.capacity import (
-    invariant_subchannel_capacity,
-    subspace_capacity,
+    invariant_subchannel_rate_lb,
+    subspace_rate_lb,
     subspace_detection_exponent,
     surviving_detection_exponent,
     water_filling,
@@ -46,26 +48,39 @@ def test_surviving_exponent_orders_correctly(setup):
     full = surviving_detection_exponent(ch, mask).exponent
     row = subspace_detection_exponent(ch, mask, ch.row_basis()).exponent
     null = subspace_detection_exponent(ch, mask, ch.null_basis()).exponent
-    assert null == pytest.approx(0.0, abs=1e-9)   # post-hoc dies
+    assert null == pytest.approx(0.0, abs=1e-9)   # nullspace mark dies
     assert row > 0.05                              # invariant survives
     assert full >= row - 1e-9                      # full space can only help
 
 
-def test_invariant_capacity_positive_nullspace_zero(setup):
+def test_mixed_perturbation_survives_partially(setup):
+    """Quotient-space framing: a mixed row+null perturbation survives partially."""
     ch, mask, _ = setup
-    r_star = invariant_subchannel_capacity(ch, mask)
-    r_null = subspace_capacity(ch, mask, ch.null_basis())
-    assert r_star.R_star > 0.0
-    assert r_null.R_star == pytest.approx(0.0, abs=1e-12)
-    assert np.all(r_star.power >= -1e-12)
+    v_row = ch.row_basis()[:, 0]
+    v_null = ch.null_basis()[:, 0]
+    mixed = (v_row + v_null) / np.sqrt(2.0)
+    surviving = ch.project_invariant(mixed)
+    # Effective perturbation is P delta: nonzero but strictly smaller than ||delta||.
+    assert 0.0 < np.linalg.norm(surviving) < np.linalg.norm(mixed)
+    exponent = 0.125 * float(mixed @ (ch.P @ mixed))
+    assert exponent == pytest.approx(0.125 * 0.5, rel=1e-9)  # half the energy survives
 
 
-def test_capacity_monotone_in_budget(setup):
+def test_invariant_rate_lb_positive_nullspace_zero(setup):
+    ch, mask, _ = setup
+    r_inv = invariant_subchannel_rate_lb(ch, mask)
+    r_null = subspace_rate_lb(ch, mask, ch.null_basis())
+    assert r_inv.R_lb > 0.0
+    assert r_null.R_lb == pytest.approx(0.0, abs=1e-12)
+    assert np.all(r_inv.power >= -1e-12)
+
+
+def test_rate_lb_monotone_in_budget(setup):
     ch, mask, _ = setup
     rs = []
     for D in [0.5, 1.0, 2.0, 4.0]:
         m = MaskingBudget(mask.M, D=D)
-        rs.append(invariant_subchannel_capacity(ch, m).R_star)
+        rs.append(invariant_subchannel_rate_lb(ch, m).R_lb)
     assert all(b >= a - 1e-9 for a, b in zip(rs, rs[1:]))  # non-decreasing
     assert rs[-1] > rs[0]
 

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from rwl.capacity import invariant_subchannel_capacity, surviving_detection_exponent
+from rwl.capacity import invariant_subchannel_rate_lb, surviving_detection_exponent
 from rwl.channel import ResynthesisChannel
 from rwl.masking import MaskingBudget
 from rwl.watermark import (
@@ -69,14 +69,14 @@ def rate_survival(rng: np.random.Generator) -> dict:
         # Post-hoc = cheapest nullspace direction: surviving exponent is identically 0.
         post_delta = nullspace_watermark(ch, mask)
         exp_post.append(0.125 * float(post_delta @ (ch.P @ post_delta)))
-        rstar_inv.append(invariant_subchannel_capacity(ch, mask).R_star)
+        rstar_inv.append(invariant_subchannel_rate_lb(ch, mask).R_lb)
         rstar_post.append(0.0)  # nullspace payload after laundering
     return {
         "D": Ds.tolist(),
         "exponent_invariant": exp_inv,
         "exponent_posthoc": exp_post,
-        "Rstar_invariant_nats": rstar_inv,
-        "Rstar_posthoc_nats": rstar_post,
+        "Rlb_invariant_nats": rstar_inv,
+        "Rlb_nullspace_nats": rstar_post,
     }
 
 
@@ -132,12 +132,12 @@ def _plot_rate_survival(data: dict):
     ax1.set_ylabel("surviving Chernoff exponent")
     ax1.legend(loc="upper left", frameon=False)
 
-    ax2.semilogx(D, data["Rstar_invariant_nats"], "-o", ms=3, color="C0",
-                 label=r"invariant $R^*$")
-    ax2.semilogx(D, data["Rstar_posthoc_nats"], "-s", ms=3, color="C3",
+    ax2.semilogx(D, data["Rlb_invariant_nats"], "-o", ms=3, color="C0",
+                 label=r"invariant $R_{\mathrm{LB}}$")
+    ax2.semilogx(D, data["Rlb_nullspace_nats"], "-s", ms=3, color="C3",
                  label="post-hoc (=0)")
     ax2.set_xlabel("imperceptibility budget $D$")
-    ax2.set_ylabel("surviving rate $R^*$ (nats/use)")
+    ax2.set_ylabel("achievable lower bound $R_{\mathrm{LB}}$ (nats/use)")
     ax2.legend(loc="upper left", frameon=False)
     return fig
 
@@ -176,7 +176,7 @@ def main() -> dict:
     print("[E0] converse: AUC(alpha=0) after =",
           round(conv["auc_after_emp"][0], 4), "(survives)")
     print("[E0] rate: R*_invariant(maxD) =",
-          round(rate["Rstar_invariant_nats"][-1], 4), "nats; post-hoc = 0")
+          round(rate["Rlb_invariant_nats"][-1], 4), "nats; post-hoc = 0")
     print("[E0] theory-vs-sim: max abs err =", round(tvs["max_abs_err"], 4),
           "RMSE =", round(tvs["rmse"], 4))
     return summary

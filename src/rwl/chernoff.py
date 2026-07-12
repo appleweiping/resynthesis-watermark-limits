@@ -10,9 +10,10 @@ information**
     e^{-k(s)} \;=\; \int p_0(x)^{1-s}\, p_1(x)^{s}\, dx .
 
 If :math:`C = 0` the two laws are indistinguishable: **no** detector, at **any** sample
-size, beats a coin flip.  Theorem 1 (the converse) is exactly the statement that the
-resynthesis channel drives :math:`C` to zero for nullspace watermarks; this module gives
-the closed forms (Gaussian) and Monte-Carlo estimators that let the test suite verify it.
+size, beats a coin flip.  In the linear-Gaussian surrogate, the analysis--resynthesis
+channel drives :math:`C` to exactly zero for nullspace perturbations (Theorem 1 there);
+for general channels only the data-processing inequality holds.  This module gives the
+closed forms (Gaussian) and Monte-Carlo estimators used to sanity-check the code.
 
 For two Gaussians :math:`\mathcal N(\mu_i, \Sigma_i)` with
 :math:`\Sigma(s) = (1-s)\Sigma_0 + s\,\Sigma_1`,

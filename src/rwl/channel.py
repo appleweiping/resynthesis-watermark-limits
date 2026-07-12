@@ -1,4 +1,4 @@
-r"""The resynthesis channel :math:`W = S \circ A`.
+r"""The analysis--resynthesis channel :math:`W = S \circ A`.
 
 An attacker "launders" audio by running it through a neural vocoder / codec / voice-
 conversion model.  We model any such blind generator as
@@ -6,32 +6,44 @@ conversion model.  We model any such blind generator as
 .. math::
     W(x) \;=\; S(A(x)),
 
-an **analysis** map :math:`A` that keeps only the perceptual invariants
-:math:`z = A(x)` (linguistic content, speaker identity, coarse prosody), followed by a
-**synthesis** map :math:`S` that re-generates a waveform consistent with :math:`z` while
-drawing everything :math:`A` discarded afresh from the clean-speech prior.
+an **analysis** map :math:`A` producing a representation :math:`z = A(x)`, followed by
+a **synthesis** map :math:`S` (possibly stochastic, with randomness independent of the
+input) that re-generates a waveform consistent with :math:`z`.
 
-Linear-Gaussian surrogate (this module)
----------------------------------------
+General model (Proposition 1 — what holds without further assumptions)
+----------------------------------------------------------------------
+For *any* channel :math:`W` the Chernoff information satisfies the data-processing
+inequality :math:`C(W_\#P_0, W_\#P_1)\le C(P_0,P_1)`: laundering can only lose
+detectability.  **Exact erasure** holds under a sufficient condition: if the embedder
+:math:`E_\kappa` satisfies :math:`A(E_\kappa(x)) = A(x)` :math:`P_0`-a.s. and :math:`S`
+depends on the input only through :math:`z` (plus independent randomness), then
+:math:`W_\#P_1 = W_\#P_0` and :math:`C(W_\#P_0,W_\#P_1)=0` for every detector and
+sample size.  Nothing stronger is claimed for general nonlinear vocoders/codecs;
+in particular the closed-form constants below do NOT transfer to them.
+
+Linear-Gaussian surrogate (this module — where the exact constants live)
+------------------------------------------------------------------------
 Work in the *whitened* coordinates where the clean prior is isotropic,
 :math:`x \sim \mathcal N(0, I_n)` (all perceptual weighting is carried by the masking
 metric in :mod:`rwl.masking`).  Let :math:`A \in \mathbb R^{k\times n}` have full row
 rank and let :math:`P = A^{+}A` be the orthogonal projector onto its row space
-:math:`\mathrm{row}(A)` (the **invariant subspace**); :math:`I-P` projects onto
-:math:`\ker(A)` (the **surface / inaudible subspace** that :math:`S` resamples).  Then
+:math:`\mathrm{row}(A)`; :math:`I-P` projects onto :math:`\ker(A)` (the subspace
+:math:`S` resamples).  Then
 
 .. math::
     W(x) \;=\; P x \;+\; (I-P)\, w, \qquad w \sim \mathcal N(0, I_n)\ \text{fresh.}
 
-Consequences used by the theorems:
+Consequences (surrogate only):
 
-* :math:`W_\#\mathcal N(0, I) = \mathcal N(0, I)` and, for an embedded shift
-  :math:`x\mapsto x+\delta`, :math:`W_\#\mathcal N(\delta, I) = \mathcal N(P\delta, I)`.
-  The **only** thing that survives laundering is the invariant component :math:`P\delta`.
-* If :math:`\delta \in \ker(A)` then :math:`P\delta = 0`: the watermark is erased exactly
-  (Theorem 1).  Since :math:`\|P\delta\|\le\|\delta\|`, detectability is monotone
-  non-increasing through :math:`W` (the data-processing inequality, with equality iff
-  :math:`\delta\in\mathrm{row}(A)`).
+* :math:`W_\#\mathcal N(0, I) = \mathcal N(0, I)` and, for a fixed additive shift
+  :math:`x\mapsto x+\delta`, :math:`W_\#\mathcal N(\delta, I) = \mathcal N(P\delta, I)`,
+  so :math:`C(W_\#P_0,W_\#P_1)=\tfrac18\|P\delta\|^2` exactly.
+* The channel transmits only the equivalence class
+  :math:`[\delta]\in\mathbb R^n/\ker A`; the effective surviving perturbation is
+  :math:`P\delta`.  Perturbations in :math:`\ker A` are erased exactly; **mixed**
+  perturbations (row + null components) survive partially; row-space-only
+  perturbations spend no budget on erased components but are not the unique
+  surviving set.
 """
 
 from __future__ import annotations

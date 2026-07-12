@@ -1,7 +1,7 @@
 [project]
 name = "rwl"
-version = "0.1.0"
-description = "The Resynthesis Channel: fundamental limits of speech watermarking against generative laundering (matched converse + achievability)."
+version = "0.2.0"
+description = "A subspace model of speech-watermark survival under analysis-resynthesis: DPI + exact-erasure conditions, linear-Gaussian closed forms, and a measured channel-relative survival predictor."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -12,7 +12,7 @@ keywords = [
   "voice-conversion", "neural-vocoder", "icassp",
 ]
 
-# Core dependencies: the theory + Monte-Carlo verification are CPU-only (numpy/scipy).
+# Core dependencies: the surrogate theory + its sanity checks are CPU-only.
 dependencies = [
   "numpy>=1.24",
   "scipy>=1.10",
@@ -20,12 +20,22 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Empirical audio instantiation (E1-E4). Heavy; run on the GPU server.
+# Empirical audio pipeline (E1-E3). Heavy; run on the GPU server.
+# Versions pinned to the configuration used for the paper runs (see also
+# requirements-audio.lock for the exact transitive freeze).
 audio = [
   "soundfile>=0.12",
-  "librosa>=0.10",
-  "torch>=2.1",
-  "torchaudio>=2.1",
+  "torch==2.8.0",
+  "torchaudio==2.8.0",
+  "vocos==0.1.0",
+  "encodec==0.1.1",
+  "audioseal>=0.1.4",
+  "pesq==0.0.4",
+  "scikit-learn>=1.3",
+  "descript-audio-codec==1.0.0",   # NOTE: install with --no-deps (pins old torch)
+  "snac==1.2.1",
+  "wavmark==0.0.3",
+  "silentcipher==1.0.2",           # NOTE: declares torch==2.2.2; works on 2.8
 ]
 dev = [
   "pytest>=7.4",

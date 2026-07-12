@@ -1,8 +1,9 @@
-"""Theorem 1 (converse) + the data-processing inequality.
+"""Surrogate sanity checks: exact erasure + the data-processing inequality.
 
-A watermark in the analysis nullspace is erased by the resynthesis channel: its
-post-laundering detection exponent is exactly zero and the optimal detector's AUC
-collapses to chance.  For any watermark, detectability is monotone non-increasing.
+In the linear-Gaussian surrogate, a perturbation in the analysis nullspace is erased
+by the channel: its post-attack detection exponent is exactly zero and the matched
+detector's AUC collapses to chance.  For any perturbation, detectability is monotone
+non-increasing.  (These tests validate the implementation against closed forms.)
 """
 
 import numpy as np

@@ -3,13 +3,15 @@ r"""Watermark constructions and their optimal detectors (linear-Gaussian surroga
 Two watermarks embed a key-dependent shift :math:`x \mapsto x+\delta` under the same
 masking budget:
 
-* **Post-hoc / surface** (:func:`nullspace_watermark`): the perceptually cheapest
-  direction — which lives in :math:`\ker(A)`.  Models AudioSeal/WavMark-style embedding
-  that hides in inaudible, resynthesis-discarded components.  Survives :math:`W` with
-  detection exponent **zero**.
+* **Nullspace** (:func:`nullspace_watermark`): the perceptually cheapest direction —
+  which lives in :math:`\ker(A)` *of this surrogate's* :math:`A`.  A stylized model of
+  embeddings that hide in resynthesis-discarded components (whether a given deployed
+  scheme actually sits in any real attacker's nullspace is an empirical question).
+  Survives :math:`W` with detection exponent **zero**.
 * **Invariant-aligned** (:func:`invariant_aligned_watermark`): the budget-optimal
-  *surviving* direction (top generalized eigenvector of :math:`(P, M)`).  Rides through
-  :math:`W` at the rate :math:`R^\*`.
+  *surviving* direction (top generalized eigenvector of :math:`(P, M)`).  Carries
+  payload at rates up to the achievable lower bound :math:`R_{\mathrm{LB}}`
+  (see :mod:`rwl.capacity`; no capacity claim).
 
 Detection is the optimal likelihood-ratio test for a known mean shift in unit-covariance
 noise: statistic :math:`t = y^\top \mu` with :math:`\mu=\delta` (before laundering) or
