@@ -55,16 +55,29 @@ def _smooth_frames(pattern: torch.Tensor, width: int = 9) -> torch.Tensor:
 
 
 def nullspace_direction(
-    an: MelAnalysis, x: torch.Tensor, key: int
+    an: MelAnalysis, x: torch.Tensor, key: int, n_proj: int = 60
 ) -> torch.Tensor:
-    """Quadrature (pure-phase) perturbation: first-order kernel of magnitude analysis."""
+    """First-order kernel of the magnitude analysis, via alternating projections.
+
+    The pointwise-quadrature spectrograms (D = i e^{i phi} r, r real) and the
+    consistent spectrograms (range of STFT) are both real-linear subspaces; their
+    intersection is exactly the waveform perturbations that leave |STFT| (hence mel)
+    unchanged to first order. Alternating projections converge onto it. The residual
+    leakage is MEASURED by verify_direction(), never assumed zero.
+    """
     X = an.stft(x)
     mag, phase = X.abs(), torch.angle(X)
+    u = torch.exp(1j * phase)                        # host phase direction
+    mask = _active_mask(mag)
     g = torch.randn(X.shape, generator=_keyed_rng(key)).to(x.device)
-    g = _smooth_frames(g) * _active_mask(mag)
-    # weight by magnitude so the phase rotation is proportional (bounded rotation)
-    D = 1j * torch.exp(1j * phase) * (g * mag)
-    delta = an.istft(X + D, length=x.shape[-1]) - x
+    g = _smooth_frames(g) * mask
+    D = 1j * u * (g * mag)                            # quadrature seed
+    delta = an.istft(D, length=x.shape[-1])           # ISTFT is linear
+    for _ in range(n_proj):
+        E = an.stft(delta)                            # -> consistent subspace
+        quad = (E * u.conj()).imag                    # quadrature (real) component
+        E_q = 1j * u * (quad * mask)                  # kill in-phase + inactive bins
+        delta = an.istft(E_q, length=x.shape[-1])
     n = torch.linalg.norm(delta)
     return delta / n.clamp_min(1e-12)
 
@@ -122,19 +135,19 @@ DIRECTION_BUILDERS = {
 def verify_direction(an: MelAnalysis, x: torch.Tensor, delta: torch.Tensor) -> dict:
     """Measured analysis change of a direction, absolute and vs a random control.
 
-    Returns ratio = ||A(x+d)-A(x)||/||d|| and ratio_rel = ratio / ratio(random
-    waveform direction of the same norm). A true nullspace direction must show
-    ratio_rel << 1; a rowspace direction ratio_rel >~ 1. These numbers are REPORTED,
-    not assumed.
+    Returns ratio = ||A(x+d)-A(x)||/||d|| at the direction's ACTUAL scale (finite-
+    amplitude leakage, what matters operationally) and ratio_rel = ratio / ratio
+    (random waveform direction of the same norm). A true nullspace direction must
+    show ratio_rel << 1; a rowspace direction ratio_rel >~ 1. These numbers are
+    REPORTED, not assumed.
     """
-    scale = 0.01 * torch.linalg.norm(x) / max(1, int(np.sqrt(x.numel())))  # small step
-    d = delta / torch.linalg.norm(delta).clamp_min(1e-12) * scale
-    ratio = an.analysis_change(x, d)
+    ratio = an.analysis_change(x, delta)
     g = torch.Generator(device="cpu"); g.manual_seed(0)
     rnd = torch.randn(x.shape, generator=g).to(x.device)
-    rnd = rnd / torch.linalg.norm(rnd) * scale
+    rnd = rnd / torch.linalg.norm(rnd).clamp_min(1e-12) * torch.linalg.norm(delta)
     ratio_rnd = an.analysis_change(x, rnd)
     return {
+        "delta_norm_rel": float(torch.linalg.norm(delta) / torch.linalg.norm(x)),
         "analysis_change_per_unit": ratio,
         "analysis_change_random_control": ratio_rnd,
         "ratio_rel": ratio / max(ratio_rnd, 1e-12),

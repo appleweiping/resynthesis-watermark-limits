@@ -11,6 +11,11 @@ Guangyu Chen, Yu~Wu, Shujie Liu, Tao Liu, Xiaoyong Du, and Furu Wei,
 \newblock ``{WavMark}: Watermarking for audio generation,'' 2023,
 \newblock arXiv:2308.12770.
 
+\bibitem{singh2024silentcipher}
+Mayank~Kumar Singh, Naoya Takahashi, Wei-Hsiang Liao, and Yuki Mitsufuji,
+\newblock ``{SilentCipher}: Deep audio watermarking,''
+\newblock in {\em Interspeech}, 2024.
+
 \bibitem{oreilly2025shallow}
 Patrick O'Reilly, Zeyu Jin, Jiaqi Su, and Bryan Pardo,
 \newblock ``Deep audio watermarks are shallow: Limitations of post-hoc
@@ -22,6 +27,24 @@ Yizhu Wen, Ashwin Innuganti, Aaron~Bien Ramos, Hanqing Guo, and Qiben Yan,
 \newblock ``{SoK}: How robust is audio watermarking in generative {AI}
   models?,'' 2025,
 \newblock arXiv:2503.19176.
+
+\bibitem{chen2026latentmark}
+Yen-Shan Chen et~al.,
+\newblock ``{Latent-Mark}: An audio watermark robust to neural codec
+  compression,'' 2026,
+\newblock arXiv:2603.05310; to appear, Interspeech.
+
+\bibitem{li2026featurealigned}
+Haiyun Li et~al.,
+\newblock ``Feature-aligned speech watermarking for robustness to
+  reconstruction distortions,'' 2026,
+\newblock arXiv:2606.11828.
+
+\bibitem{li2025voicemark}
+Haiyun Li, Zhiyong Wu, Xiaofeng Xie, Jingran Xie, Yaoxun Xu, and Hanyang Peng,
+\newblock ``{VoiceMark}: Zero-shot voice cloning-resistant watermarking
+  approach leveraging speaker-specific latents,''
+\newblock in {\em Interspeech}, 2025.
 
 \bibitem{zhao2024invisible}
 Xuandong Zhao, Kexun Zhang, Zihao Su, Saastha Vasan, Ilya Grishchenko,
@@ -45,6 +68,18 @@ Zijin Yang, Kai Zeng, Kejiang Chen, Han Fang, Weiming Zhang, and Nenghai Yu,
 \newblock in {\em IEEE/CVF Conf. on Computer Vision and Pattern Recognition
   (CVPR)}, 2024.
 
+\bibitem{costa1983writing}
+Max Costa,
+\newblock ``Writing on dirty paper,''
+\newblock {\em IEEE Transactions on Information Theory}, vol. 29, no. 3, pp.
+  439--441, 1983.
+
+\bibitem{moulin2003information}
+Pierre Moulin and Joseph~A. O'Sullivan,
+\newblock ``Information-theoretic analysis of information hiding,''
+\newblock {\em IEEE Transactions on Information Theory}, vol. 49, no. 3, pp.
+  563--593, 2003.
+
 \bibitem{chernoff1952measure}
 Herman Chernoff,
 \newblock ``A measure of asymptotic efficiency for tests of a hypothesis based
@@ -57,42 +92,11 @@ Thomas~M. Cover and Joy~A. Thomas,
 \newblock {\em Elements of Information Theory},
 \newblock Wiley-Interscience, 2nd edition, 2006.
 
-\bibitem{panayotov2015librispeech}
-Vassil Panayotov, Guoguo Chen, Daniel Povey, and Sanjeev Khudanpur,
-\newblock ``{Librispeech}: An {ASR} corpus based on public domain audio
-  books,''
-\newblock in {\em IEEE Int. Conf. on Acoustics, Speech and Signal Processing
-  (ICASSP)}, 2015.
-
-\bibitem{griffin1984signal}
-Daniel Griffin and Jae Lim,
-\newblock ``Signal estimation from modified short-time {F}ourier transform,''
-\newblock {\em IEEE Transactions on Acoustics, Speech, and Signal Processing},
-  vol. 32, no. 2, pp. 236--243, 1984.
-
-\bibitem{defossez2022encodec}
-Alexandre D{\'e}fossez, Jade Copet, Gabriel Synnaeve, and Yossi Adi,
-\newblock ``High fidelity neural audio compression,''
-\newblock {\em Transactions on Machine Learning Research (TMLR)}, 2023.
-
-\bibitem{siuzdak2024vocos}
-Hubert Siuzdak,
-\newblock ``{Vocos}: Closing the gap between time-domain and {F}ourier-based
-  neural vocoders for high-quality audio synthesis,''
-\newblock in {\em International Conference on Learning Representations (ICLR)},
-  2024.
-
-\bibitem{moulin2003information}
-Pierre Moulin and Joseph~A. O'Sullivan,
-\newblock ``Information-theoretic analysis of information hiding,''
-\newblock {\em IEEE Transactions on Information Theory}, vol. 49, no. 3, pp.
-  563--593, 2003.
-
-\bibitem{costa1983writing}
-Max Costa,
-\newblock ``Writing on dirty paper,''
-\newblock {\em IEEE Transactions on Information Theory}, vol. 29, no. 3, pp.
-  439--441, 1983.
+\bibitem{ding2026evade}
+Weikang Ding, Hanqing Guo, Rui Duan, Guangjing Wang, Yuanda Wang, Mingzhe Chen,
+  and Qiben Yan,
+\newblock ``Learning to evade: Adaptive attacks on audio watermarking,'' 2026,
+\newblock arXiv:2606.22310; to appear, Interspeech.
 
 \bibitem{chen2001quantization}
 Brian Chen and Gregory~W. Wornell,

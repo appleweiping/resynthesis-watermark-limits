@@ -1,0 +1,35 @@
+# Exact audio-pipeline environment used for the paper runs (server: RTX 4090,
+# Python 3.12, CUDA 12.8). Install torch/torchaudio from the cu128 index first,
+# then `pip install --no-deps descript-audio-codec descript-audiotools` (they pin
+# an old torch), then the rest.
+#
+# Models (name -> revision/source):
+#   Vocos mel        charactr/vocos-mel-24khz        (HF)
+#   Vocos-EnCodec    charactr/vocos-encodec-24khz    (HF)
+#   EnCodec 24k      encodec_24khz                   (encodec pip package weights)
+#   DAC 16k          descript/dac_16khz              (github release via dac.utils.download)
+#   SNAC 24k         hubertsiuzdak/snac_24khz        (HF)
+#   AudioSeal        audioseal_wm_16bits / audioseal_detector_16bits
+#   WavMark          default checkpoint (HF: M4869/WavMark)
+#   SilentCipher     16k model (github release via silentcipher.get_model)
+#   kNN-VC           bshall/knn-vc torch.hub, prematched HiFi-GAN + WavLM-Large
+#   Data             LibriSpeech dev-clean + test-clean (openslr.elda.org mirror)
+
+torch==2.8.0+cu128
+torchaudio==2.8.0+cu128
+numpy==1.26.4
+scipy==1.11.4
+scikit-learn==1.9.0
+soundfile==0.12.1
+librosa==0.10.2.post1
+pesq==0.0.4
+vocos==0.1.0
+encodec==0.1.1
+audioseal==0.2.0
+descript-audio-codec==1.0.0
+descript-audiotools==0.7.2
+argbind==0.3.9
+julius==0.2.8
+snac==1.2.1
+wavmark==0.0.3
+silentcipher==1.0.2
