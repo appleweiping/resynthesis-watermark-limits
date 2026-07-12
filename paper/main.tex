@@ -226,12 +226,20 @@ not a deployable detector; deployed-detector conclusions come only from the base
 \noindent\textbf{E2 --- does channel-relative sensitivity predict survival?}
 For $\ge$100 random directions (kernel/row mixtures, random in-phase) $\times$
 randomized budgets, we measure $s_\W$ \eqref{eq:sens} per attacker and the oriented
-post-attack AUC of the probe. The survival mapping (isotonic, and
-$\Phi(a\sqrt f{+}b)$) is fit on dev-clean and evaluated on test-clean:
-Spearman $\spearmanSens$ (95\% CI $\spearmanSensCI$), $R^2=\rTwoSens$;
-within-attacker permutation test $p=\permP$. Competitors under the identical protocol:
-waveform SNR ($\rho_s=\spearmanSNR$), spectral centroid ($\rho_s=\spearmanCentroid$),
-STFT-magnitude fraction. [Table/figure inserted from results.]
+post-attack AUC of the probe in \emph{two detector domains}: waveform correlation and a
+fixed mel-reading matched filter. The two answer different questions --- and disagree
+--- because survival is a property of the (channel, \emph{detector-domain}) pair:
+phase-rederiving attacks decorrelate waveforms while transmitting the embedded
+magnitude pattern, whereas waveform codecs transmit sub-mel detail the mel probe cannot
+see. Mappings (isotonic; $\Phi(a\sqrt f{+}b)$) are fit on dev-clean and evaluated on
+test-clean only. For the mel-reading detector: Spearman $\spearmanSens$ (95\% CI
+$\spearmanSensCI$), within-attacker permutation $p=\permP$; competitors under the
+identical protocol: waveform SNR ($\rho_s=\spearmanSNR$), spectral centroid
+($\rho_s=\spearmanCentroid$). The theory's \emph{one-sided} implication --- $s_\W\!\to\!0$
+forces chance in \emph{every} detector domain (Prop.~\ref{prop:general}) --- is tested
+directly: bottom-decile-$s_\W$ directions deviate from chance by $\necLowMel$ (mel) /
+$\necLowWave$ (waveform) median $|\mathrm{AUC}-0.5|$, versus $\necRestMel$ for the rest.
+[Per-attacker table inserted from results.]
 
 \noindent\textbf{E1 --- deployed watermarks at matched perceptual quality.}
 AudioSeal~\cite{sanroman2024audioseal}, WavMark~\cite{chen2023wavmark}, and
