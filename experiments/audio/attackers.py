@@ -67,7 +67,7 @@ class StftGriffinLim(_Base):
 
     name = "stft_gl"
 
-    def __init__(self, n_iter: int = 60, device: str = "cpu"):
+    def __init__(self, n_iter: int = 32, device: str = "cpu"):
         import torchaudio
 
         self.device = device
@@ -90,7 +90,7 @@ class MelGriffinLim(_Base):
 
     name = "mel80_gl"
 
-    def __init__(self, n_iter: int = 60, device: str = "cpu"):
+    def __init__(self, n_iter: int = 32, device: str = "cpu"):
         import torchaudio
 
         self.device = device
