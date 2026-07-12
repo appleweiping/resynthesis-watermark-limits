@@ -227,23 +227,37 @@ $\rowLeakOp\times$. Their detection uses a genie-aided matched-filter \emph{prob
 (the known per-utterance perturbation) --- a diagnostic of channel geometry, explicitly
 not a deployable detector; deployed-detector conclusions come only from the baselines.
 
-\noindent\textbf{E2 --- does channel-relative sensitivity predict survival?}
-For $\ge$100 random directions (kernel/row mixtures, random in-phase) $\times$
-randomized budgets, we measure $s_\W$ \eqref{eq:sens} per attacker and the oriented
-post-attack AUC of the probe in \emph{two detector domains}: waveform correlation and a
-fixed mel-reading matched filter. The two answer different questions --- and disagree
---- because survival is a property of the (channel, \emph{detector-domain}) pair:
-phase-rederiving attacks decorrelate waveforms while transmitting the embedded
-magnitude pattern, whereas waveform codecs transmit sub-mel detail the mel probe cannot
-see. Mappings (isotonic; $\Phi(a\sqrt f{+}b)$) are fit on dev-clean and evaluated on
-test-clean only. For the mel-reading detector: Spearman $\spearmanSens$ (95\% CI
-$\spearmanSensCI$), within-attacker permutation $p=\permP$; competitors under the
-identical protocol: waveform SNR ($\rho_s=\spearmanSNR$), spectral centroid
-($\rho_s=\spearmanCentroid$). The theory's \emph{one-sided} implication --- $s_\W\!\to\!0$
-forces chance in \emph{every} detector domain (Prop.~\ref{prop:general}) --- is tested
-directly: bottom-decile-$s_\W$ directions deviate from chance by $\necLowMel$ (mel) /
-$\necLowWave$ (waveform) median $|\mathrm{AUC}-0.5|$, versus $\necRestMel$ for the rest.
-[Per-attacker table inserted from results.]
+\noindent\textbf{E2 --- do geometric predictors predict survival?}
+For 108 random directions (kernel/row mixtures, random in-phase) $\times$ randomized
+budgets, we measure $s_\W$ \eqref{eq:sens} per attacker and post-attack detectability
+(oriented probe AUC against host variability) in \emph{two detector domains}: waveform
+correlation and a fixed mel-reading matched filter. Mappings are fit on dev-clean and
+evaluated on test-clean only; all statistics are within-attacker (rank-pooled), so
+between-attacker level differences can neither create nor mask an association.
+Results (Fig.~\ref{fig:e2}): $s_\W$ predicts mel-domain detectability \emph{within
+every attacker} (per-attacker Spearman $\rhoMelmelgl/\rhoMelvocos/\rhoMelencodec/
+\rhoMeldac/\rhoMelsnac$; pooled $\spearmanSens$, permutation $p=\permP$), as does the
+static magnitude-change fraction ($\spearmanMagFrac$) --- both \emph{geometric}
+quantities --- while budget (SNR, $\spearmanSNR$) and spectral centroid
+($\spearmanCentroid$) do not. The theory's \emph{one-sided} implication
+(Prop.~\ref{prop:general}: $s_\W\!\to\!0$ forces chance) holds out-of-sample: the
+$\necNLow$ directions in the near-null regime ($s_\W\!\le\!0.25\times$ median; they
+exist only for the mel-analysis channels --- the codecs' kernels are too small to
+reach) deviate from chance by median $\necLowMel$, \emph{maximum} $\necMaxLowMel$,
+versus $\necRestMel$ for the rest. In the \emph{waveform} domain the codecs show the
+\emph{opposite} dependence ($\rho_s=\rhoWaveEncodec$ EnCodec, $\rhoWaveSnac$ SNAC):
+they transmit precisely the sub-mel detail that mel analysis discards --- survival is
+a property of the (channel, detector-domain) pair, not of the watermark alone.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{fig_e2_predictor}
+  \caption{E2, held-out test split. (a) Channel-relative sensitivity $s_\W$ vs.\
+  mel-probe detectability, per attacker, with isotonic fits learned on the fit split.
+  (b) Directions in the absolute near-null regime stay at chance in both probe
+  domains.}
+  \label{fig:e2}
+\end{figure}
 
 \noindent\textbf{E1 --- deployed watermarks at matched perceptual quality.}
 AudioSeal~\cite{sanroman2024audioseal}, WavMark~\cite{chen2023wavmark}, and

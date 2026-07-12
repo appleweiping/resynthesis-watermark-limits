@@ -42,9 +42,9 @@ def main() -> None:
         ft = [p for p in fit if p["attacker"] == att]
         tt = [p for p in test if p["attacker"] == att]
         xf = np.array([p["pred_sensitivity"] for p in ft])
-        yf = np.array([p["paired_mel"] for p in ft])
+        yf = np.array([p["auc_mel"] for p in ft])
         xt = np.array([p["pred_sensitivity"] for p in tt])
-        yt = np.array([p["paired_mel"] for p in tt])
+        yt = np.array([p["auc_mel"] for p in tt])
         ax1.scatter(xt, yt, s=9, alpha=0.55, color=c, marker=m, label=lab,
                     linewidths=0)
         iso = IsotonicRegression(out_of_bounds="clip").fit(xf, yf)
@@ -53,8 +53,8 @@ def main() -> None:
     ax1.axhline(0.5, color="0.4", lw=0.8, ls=":")
     ax1.set_xscale("log")
     ax1.set_xlabel(r"channel-relative sensitivity $s_{\mathcal{W}}$ (log)")
-    ax1.set_ylabel("paired mel-probe transmission")
-    ax1.set_ylim(0.44, 1.03)
+    ax1.set_ylabel("mel-probe detectability (oriented AUC)")
+    ax1.set_ylim(0.47, 0.85)
     ax1.legend(frameon=False, fontsize=6.5, ncol=2, loc="lower right",
                handletextpad=0.1, columnspacing=0.6)
     ax1.set_title("(a) test split; isotonic fits from fit split", fontsize=8)
@@ -69,7 +69,7 @@ def main() -> None:
         idx = np.flatnonzero(strata == a)
         low[idx[s[idx] <= thr * np.median(s[idx])]] = True
     data, labels = [], []
-    for resp, lab in [("paired_mel", "mel probe"), ("paired_wave", "wave probe")]:
+    for resp, lab in [("auc_mel", "mel probe"), ("auc_wave", "wave probe")]:
         y = np.abs(np.array([p[resp] for p in test]) - 0.5)
         if low.any():
             data.append(y[low]); labels.append(f"near-null\n({lab})")
@@ -79,7 +79,7 @@ def main() -> None:
     for patch, lab in zip(bp["boxes"], labels):
         patch.set_facecolor("#c6dbef" if "near-null" in lab else "#fdd0a2")
         patch.set_alpha(0.9)
-    ax2.set_ylabel(r"$|\mathrm{transmission}-0.5|$")
+    ax2.set_ylabel(r"$|\mathrm{AUC}-0.5|$")
     ax2.tick_params(axis="x", labelsize=6.5)
     ax2.set_title("(b) near-null $s_\\mathcal{W}$ stays at chance", fontsize=8)
 
