@@ -46,7 +46,8 @@ concrete invariants:
 | What is provided | impossibility (Zhao); constructions (Tree-Ring, Gaussian Shading) | **matched converse *and* achievability** with an explicit surviving *rate* `R*` |
 
 That structure — speech resynthesis exposes a **named, estimable** invariant sub-channel — is what
-lets us prove a positive result the image papers cannot state. See
+lets us give a *quantitative* rate `R*` for speech, rather than only the qualitative
+"embed-in-what-survives" prescription the image literature already has. See
 [`docs/RELATED_WORK.md`](docs/RELATED_WORK.md) for a full differentiation.
 
 ---
@@ -65,11 +66,11 @@ information** `C(P₀, P₁)`. The attacker applies the resynthesis channel `W =
   observations. Companion Wasserstein bound: the laundered signal is distributed as clean speech
   conditioned on the same invariants, so it is `≈` an unwatermarked signal.
 - **Achievability / invariant sub-channel (Thm 2).** Restrict the watermark to move `z = A(x)`
-  within the imperceptibility budget `D`. The surviving payload is the capacity
-  `R\* = max_{q: 𝔼[d(x,x+δ)] ≤ D} I(m; A(x+δ))` of the induced sub-channel, and it is achievable by
-  an invariant-aligned code. `R\* > 0` whenever the budget buys a distinguishable shift of a
-  preserved coordinate. Thm 1 and Thm 2 **meet**: the survivable set is *exactly* the non-nullspace
-  of `A`.
+  within the imperceptibility budget `D`. The surviving payload is the **blind-embedder rate**
+  `R* = max_{tr(M_row Q) ≤ D} ½ log det(I + Q)` of the induced sub-channel (host as interference;
+  informed/dirty-paper coding could exceed it), achievable by an invariant-aligned code.
+  `R* > 0` whenever the budget buys a distinguishable shift of a preserved coordinate. Thm 1 and
+  Thm 2 **meet**: the survivable set is *exactly* the non-nullspace of `A`.
 
 Both theorems are validated on a tractable **linear-Gaussian surrogate** (closed-form Chernoff
 information and capacity) by the Monte-Carlo test suite, then demonstrated on real speech.
