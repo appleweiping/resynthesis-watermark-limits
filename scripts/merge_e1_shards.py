@@ -79,11 +79,17 @@ def main() -> None:
         "merged_from": ["silentcipher_a", "silentcipher_b"],
     }
     (RES / "e1_survival_silentcipher.json").write_text(json.dumps(out))
+    # combined per-clip score arrays (needed by rethreshold_e1.py)
+    merged_scores = {}
+    for tag in za.files:
+        merged_scores[tag] = np.concatenate([za[tag], zb[tag]], axis=1)
+    np.savez_compressed(RES / "e1_scores_silentcipher.npz", **merged_scores)
     shards = RES / "shards"; shards.mkdir(exist_ok=True)
     for stem in ["e1_survival_silentcipher_a.json", "e1_survival_silentcipher_b.json"]:
-        shutil.move(str(RES / stem), str(shards / stem))
+        if (RES / stem).exists():
+            shutil.move(str(RES / stem), str(shards / stem))
     print(f"merged {len(merged_rows)} rows -> e1_survival_silentcipher.json "
-          f"(n_test={out['n_test']})")
+          f"(n_test={out['n_test']}) + e1_scores_silentcipher.npz")
 
 
 if __name__ == "__main__":

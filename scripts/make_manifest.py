@@ -131,8 +131,33 @@ def main() -> None:
     ap.add_argument("--n-test", type=int, default=1000)
     ap.add_argument("--n-fit", type=int, default=400)
     ap.add_argument("--n-calib", type=int, default=5000)
+    ap.add_argument("--calib-extra-from", default=None,
+                    help="build a CALIBRATION-ONLY manifest from this partition "
+                         "(e.g. dev-other) — supplements the main manifest's "
+                         "calibration split to reach the >=5000 negatives spec")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
+
+    if args.calib_extra_from:
+        root = Path(args.root)
+        rng = np.random.default_rng(args.seed + 977)
+        rows = _index_partition(root / "LibriSpeech" / args.calib_extra_from)
+        rng.shuffle(rows)
+        calib = _stratified_sample(rows, args.n_calib, 4, rng)
+        manifest = {
+            "seed": args.seed, "sr": SR, "clip_seconds": CLIP_SECONDS,
+            "partition": args.calib_extra_from,
+            "splits": {"calibration": calib},
+            "stats": {"calibration": {
+                "n_clips": len(calib),
+                "n_speakers": len({s["speaker"] for s in calib}),
+            }},
+        }
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(manifest), encoding="utf-8")
+        print(json.dumps(manifest["stats"], indent=2)); print("wrote", out)
+        return
 
     root = Path(args.root)
     ls = root / "LibriSpeech"
