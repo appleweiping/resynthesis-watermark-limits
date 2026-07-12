@@ -106,26 +106,51 @@ class WavMarkBaseline:
 
 
 class SilentCipherBaseline:
+    """SilentCipher via its SUPPORTED 44.1k path (README example; 5-byte payload).
+
+    The released 16k model (message_len=16) is unreachable through the package's
+    byte-packing API (needs 15 two-bit symbols; bytes give multiples of 4), in both
+    the pip package and the repo — so we deploy the 44.1k model on 16 kHz speech;
+    encode_wav/decode_wav resample internally (16k->44.1k is lossless upsampling).
+    """
+
     name = "silentcipher"
+
+    # Checkpoints from HF 'Sony/SilentCipher' (snapshot_download); the pip package
+    # ships no weights and its default relative paths do not exist.
+    MODELS_DIR = "/root/autodl-tmp/silentcipher-models"
 
     def __init__(self, device: str = "cpu", strength: float = 1.0,
                  message_sdr: float = 47.0):
+        import os
         import silentcipher
 
         self.device = device
         self.strength = float(strength)
         self.message_sdr = float(message_sdr)
-        self.model = silentcipher.get_model(model_type="16k", device=device)
+        ckpt = os.environ.get("SILENTCIPHER_CKPT",
+                              f"{self.MODELS_DIR}/44_1_khz/73999_iteration")
+        self.model = silentcipher.get_model(
+            model_type="44.1k", ckpt_path=ckpt,
+            config_path=f"{ckpt}/hparams.yaml", device=device)
 
     def _msg(self, key: int) -> list[int]:
+        # 44.1k model: message_len=21 -> 5 bytes (20 two-bit symbols + terminator)
         rng = np.random.default_rng(key)
         return [int(v) for v in rng.integers(0, 256, size=5)]
 
     def embed(self, wav: np.ndarray, key: int) -> np.ndarray:
+        import torch as _torch
+        import torchaudio.functional as AF
+
         x = _np32(wav)
-        y, _ = self.model.encode_wav(x, SR, self._msg(key),
-                                     message_sdr=self.message_sdr)
-        y = _np32(y)
+        y_out, _ = self.model.encode_wav(x, SR, self._msg(key),
+                                         message_sdr=self.message_sdr)
+        y_out = _np32(y_out)
+        if len(y_out) > 1.5 * len(x):     # returned at model sr (44.1k) -> back to 16k
+            y = AF.resample(_torch.as_tensor(y_out), 44100, SR).numpy()
+        else:                              # returned at input sr already
+            y = y_out
         n = min(len(y), len(x))
         out = x.copy()
         out[:n] = x[:n] + self.strength * (y[:n] - x[:n])
