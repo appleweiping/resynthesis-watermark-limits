@@ -52,20 +52,23 @@ def main() -> None:
     plt.close(fig)
     print(f"fit a={a_hat:.2f} b={b_hat:.2f} on {len(f_mix)} mixture pts; wrote fig_e1_auc_vs_fraction.pdf")
 
-    # ---- fig_e2: payload bit-accuracy after mel-inversion vs SNR (legible labels) ----
+    # ---- fig_e2: payload bit-accuracy, clean vs after mel-inversion, vs SNR ----
+    # Survival = clean (dashed) ~ after (solid). Invariant's modest clean rate shown honestly.
     e2 = json.loads((ROOT / "results" / "e2_audio.json").read_text())
-    fig, ax = plt.subplots(figsize=(3.3, 2.6))
-    for wm, (c, m, lab) in {"magnitude": ("C0", "-o", "invariant"),
-                            "surface": ("C3", "-s", "surface")}.items():
+    fig, ax = plt.subplots(figsize=(3.4, 2.6))
+    for wm, (c, lab) in {"magnitude": ("C0", "invariant"), "surface": ("C3", "surface")}.items():
         cur = sorted(e2["curves"][wm], key=lambda r: r["snr_db"])
-        ax.plot([r["snr_db"] for r in cur], [r["bitacc_gl"] for r in cur], m,
-                color=c, ms=4, label=f"{lab}")
+        snr = [r["snr_db"] for r in cur]
+        ax.plot(snr, [r["bitacc_clean"] for r in cur], "--", color=c, lw=1.0, alpha=0.7)
+        ax.plot(snr, [r["bitacc_gl"] for r in cur], "-o", color=c, ms=4,
+                label=f"{lab} (after)")
     ax.axhline(0.5, color="0.4", lw=0.8, ls=":")
+    ax.plot([], [], "--", color="0.5", label="clean (dashed)")
     ax.set_xlabel("watermark SNR (dB) $\\;\\leftarrow$ more budget")
-    ax.set_ylabel("payload bit-acc. after laundering")
+    ax.set_ylabel("payload bit-accuracy")
     ax.invert_xaxis()
     ax.set_ylim(0.45, 1.03)
-    ax.legend(frameon=False, fontsize=8, loc="center left")
+    ax.legend(frameon=False, fontsize=7, loc="center left")
     fig.tight_layout()
     fig.savefig(FIG / "fig_e2_rate_survival.pdf")
     plt.close(fig)
