@@ -64,11 +64,12 @@ channel-relative \emph{survival predictor}: each attacker's own analysis sensiti
 On LibriSpeech ($\nTest$ speaker-disjoint test clips, thresholds from $\nCalib$ independent
 calibration clips), across spectral inversion, two neural vocoder pipelines, three neural
 codecs, and self voice-conversion, the predictor tracks held-out post-attack separability
-(Spearman $\spearmanSens$, perm.\ $p=\permP$), outperforming SNR and spectral-centroid
-controls. Deployed watermarks (AudioSeal, WavMark, SilentCipher) at matched perceptual
-quality fail \emph{operationally} under resynthesis --- score sign/order inversions under
-their original operating rules --- while attack-conditioned separability often remains;
-we report both, and never conflate them.
+within every attacker (pooled Spearman $\spearmanSens$, perm.\ $p=\permP$), while SNR and
+spectral-centroid controls fail. Deployed watermarks (AudioSeal, WavMark, SilentCipher) at
+matched perceptual quality lose their calibrated operating point under \emph{every} lossy
+channel, in two distinct modes we keep separate: \emph{erasure} (separability itself
+collapses) and \emph{calibration failure} (separability remains but the fixed threshold's
+false-alarm rate explodes on attacked clean audio).
 \end{abstract}
 
 \begin{keywords}
@@ -111,10 +112,9 @@ sensitivity --- validated on \emph{held-out, speaker-disjoint} data across seven
 resynthesis families against competing predictors, with permutation controls
 (\S\ref{sec:exp}).
 (v)~A calibrated operational evaluation of deployed watermarks at matched perceptual
-quality, separating \emph{operational failure} (sign/order-inverted scores under the
-original rule, thresholds from an independent calibration set) from loss of
-\emph{separability} (oriented AUC) --- the two are routinely conflated
-(\S\ref{sec:exp}).
+quality, separating loss of \emph{separability} (oriented AUC) from loss of the
+\emph{calibrated operating point} (TPR and \emph{achieved} FPR at a threshold fixed on
+an independent calibration set) --- distinctions routinely conflated (\S\ref{sec:exp}).
 
 \section{The analysis--resynthesis channel}
 \label{sec:model}
@@ -261,16 +261,22 @@ a property of the (channel, detector-domain) pair, not of the watermark alone.
 
 \noindent\textbf{E1 --- deployed watermarks at matched perceptual quality.}
 AudioSeal~\cite{sanroman2024audioseal}, WavMark~\cite{chen2023wavmark}, and
-SilentCipher~\cite{singh2024silentcipher}, each tuned to the same median PESQ
-(\pesqTargetVal) before attack --- no audible-vs-transparent comparisons. Per
-(baseline, attacker, key): raw AUC, oriented AUC (utterance-clustered bootstrap CIs),
-TPR at the calibration-fixed 1\%-FPR threshold (Clopper--Pearson), payload accuracy, and
-an attack-aware recalibration diagnostic. [Table inserted from results.] The recurring
-pattern: under resynthesis the deployed scores often \emph{invert} (raw AUC $<0.5$) ---
-operational failure under the original rule --- while oriented separability remains
-substantial; codec-hardened schemes survive the codecs they were hardened against. This
-is precisely the detector-dependence the subspace model predicts: survival tracks where
-the \emph{detector reads}, relative to what the channel preserves.
+SilentCipher~\cite{singh2024silentcipher}, each tuned to the same median PESQ target
+before attack --- no audible-vs-transparent comparisons. Per (baseline, attacker, key)
+we report oriented AUC (utterance-clustered bootstrap CIs) and the calibrated operating
+point --- TPR \emph{and achieved FPR} at the 1\%-FPR threshold fixed on \nCalib{}
+independent clean negatives (Clopper--Pearson intervals) --- plus an attack-aware
+recalibration diagnostic (Table~\ref{tab:e1}). Every baseline loses its operating point
+under every lossy channel, in two sharply different modes. \emph{Erasure}: SilentCipher
+collapses to chance under all ten channels (AUC $0.99\!\to\!0.50$, TPR
+$0.98\!\to\!0.00$, nothing recoverable by recalibration); AudioSeal is erased by
+spectral inversion, SNAC, and self-VC. \emph{Calibration failure}: under the EnCodec
+family AudioSeal \emph{retains} separability (AUC $0.93$) yet the fixed threshold's
+false-alarm rate explodes ($0.01\!\to\!0.80$--$0.87$): the codec round-trip pushes
+\emph{clean} audio across the detection boundary. Survival is channel-specific in
+exactly the way the subspace picture suggests --- what a scheme's detector reads,
+relative to what each channel preserves and how the channel moves clean signals ---
+and no sign/order inversion of scores occurred anywhere in the final protocol.
 
 \noindent\textbf{E3 --- multi-bit proof of concept (no rate claim).}
 A $B$-bit payload in the unified mel domain with frame-differential BPSK and a fully

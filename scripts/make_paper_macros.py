@@ -183,25 +183,29 @@ def e1_table(e1: dict) -> list[str]:
     rows = e1["rows"]
     atts = [a for a in ATT_ORDER
             if any(r["attacker"] == a for r in rows)]
-    # average over keys
+    # average over keys; cells show oriented AUC / TPR / ACHIEVED FPR at the
+    # clean-calibration threshold (raw==oriented in all final rows — no sign
+    # inversions occurred — so raw is omitted from cells; it lives in the JSON)
     def cell(bl: str, att: str) -> str:
         rs = [r for r in rows if r["baseline"] == bl and r["attacker"] == att]
         if not rs:
             return "--"
-        raw = np.mean([r["auc_raw"] for r in rs])
         orn = np.mean([r["auc_oriented"] for r in rs])
         tpr = np.mean([r["operating_point"]["tpr"] for r in rs])
-        return f"{raw:.2f}/{orn:.2f}/{tpr:.2f}"
+        fpr = np.mean([r["operating_point"]["fpr"] for r in rs])
+        return f"{orn:.2f}/{tpr:.2f}/{fpr:.2f}"
 
     bls = sorted({r["baseline"] for r in rows}, key=lambda b: list(BL_LABEL).index(b))
     lines = [
         "% AUTO-GENERATED: raw AUC / oriented AUC / TPR@1%FPR (calib.-fixed threshold)",
         "\\begin{table*}[t]\\centering",
         "\\caption{Deployed watermarks under analysis--resynthesis at matched median "
-        f"PESQ {e1['pesq_target']:.1f}. Cells: raw AUC\\,/\\,oriented AUC\\,/\\,TPR at "
-        "the 1\\%-FPR threshold fixed on the independent calibration split "
-        f"($n={e1['n_calib']}$). Raw$<$0.5 with high oriented = score sign/order "
-        "inversion: operational failure with separability remaining.}",
+        "PESQ. Cells: oriented AUC\\,/\\,TPR\\,/\\,\\emph{achieved} FPR at the 1\\%-FPR "
+        "threshold fixed on the independent calibration split "
+        f"($n={e1['n_calib']}$ clean negatives). Two failure modes appear: "
+        "\\emph{erasure} (AUC$\\to$0.5, TPR$\\to$0) and \\emph{calibration failure} "
+        "(separability retained but the fixed threshold's false-alarm rate explodes on "
+        "attacked clean audio).}",
         "\\label{tab:e1}\\footnotesize\\setlength{\\tabcolsep}{3.2pt}",
         "\\begin{tabular}{l" + "c" * (len(atts) + 1) + "}",
         "\\toprule",
