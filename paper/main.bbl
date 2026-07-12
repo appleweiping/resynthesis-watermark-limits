@@ -1,0 +1,83 @@
+\begin{thebibliography}{10}
+
+\bibitem{sanroman2024audioseal}
+Robin San~Roman, Pierre Fernandez, Alexandre D{\'e}fossez, Teddy Furon, Tuan
+  Tran, and Hady Elsahar,
+\newblock ``Proactive detection of voice cloning with localized watermarking,''
+\newblock in {\em International Conference on Machine Learning (ICML)}, 2024.
+
+\bibitem{chen2023wavmark}
+Guangyu Chen, Yu~Wu, Shujie Liu, Tao Liu, Xiaoyong Du, and Furu Wei,
+\newblock ``{WavMark}: Watermarking for audio generation,''
+\newblock in {\em arXiv preprint arXiv:2308.12770}, 2023.
+
+\bibitem{oreilly2025shallow}
+Patrick O'Reilly, Zeyu Jin, Jiaqi Su, and Bryan Pardo,
+\newblock ``Deep audio watermarks are shallow: Limitations of post-hoc
+  watermarking techniques for speech,''
+\newblock in {\em ICLR Workshop on GenAI Watermarking}, 2025.
+
+\bibitem{liu2025sok}
+Yizhu Liu et~al.,
+\newblock ``{SoK}: How robust is audio watermarking in generative {AI}
+  models?,''
+\newblock {\em arXiv preprint arXiv:2503.19176}, 2025.
+
+\bibitem{zhao2024invisible}
+Xuandong Zhao, Kexun Zhang, Zihao Su, Saastha Vasan, Ilya Grishchenko,
+  Christopher Kruegel, Giovanni Vigna, Yu-Xiang Wang, and Lei Li,
+\newblock ``Invisible image watermarks are provably removable using generative
+  {AI},''
+\newblock in {\em Advances in Neural Information Processing Systems (NeurIPS)},
+  2024.
+
+\bibitem{chernoff1952measure}
+Herman Chernoff,
+\newblock ``A measure of asymptotic efficiency for tests of a hypothesis based
+  on the sum of observations,''
+\newblock {\em The Annals of Mathematical Statistics}, vol. 23, no. 4, pp.
+  493--507, 1952.
+
+\bibitem{cover2006elements}
+Thomas~M. Cover and Joy~A. Thomas,
+\newblock {\em Elements of Information Theory},
+\newblock Wiley-Interscience, 2nd edition, 2006.
+
+\bibitem{panayotov2015librispeech}
+Vassil Panayotov, Guoguo Chen, Daniel Povey, and Sanjeev Khudanpur,
+\newblock ``{Librispeech}: An {ASR} corpus based on public domain audio
+  books,''
+\newblock in {\em IEEE Int. Conf. on Acoustics, Speech and Signal Processing
+  (ICASSP)}, 2015.
+
+\bibitem{griffin1984signal}
+Daniel Griffin and Jae Lim,
+\newblock ``Signal estimation from modified short-time {F}ourier transform,''
+\newblock {\em IEEE Transactions on Acoustics, Speech, and Signal Processing},
+  vol. 32, no. 2, pp. 236--243, 1984.
+
+\bibitem{defossez2022encodec}
+Alexandre D{\'e}fossez, Jade Copet, Gabriel Synnaeve, and Yossi Adi,
+\newblock ``High fidelity neural audio compression,''
+\newblock {\em Transactions on Machine Learning Research (TMLR)}, 2023.
+
+\bibitem{moulin2003information}
+Pierre Moulin and Joseph~A. O'Sullivan,
+\newblock ``Information-theoretic analysis of information hiding,''
+\newblock {\em IEEE Transactions on Information Theory}, vol. 49, no. 3, pp.
+  563--593, 2003.
+
+\bibitem{costa1983writing}
+Max Costa,
+\newblock ``Writing on dirty paper,''
+\newblock {\em IEEE Transactions on Information Theory}, vol. 29, no. 3, pp.
+  439--441, 1983.
+
+\bibitem{chen2001quantization}
+Brian Chen and Gregory~W. Wornell,
+\newblock ``Quantization index modulation: A class of provably good methods for
+  digital watermarking and information embedding,''
+\newblock {\em IEEE Transactions on Information Theory}, vol. 47, no. 4, pp.
+  1423--1443, 2001.
+
+\end{thebibliography}

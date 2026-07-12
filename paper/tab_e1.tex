@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\caption{Real speech (LibriSpeech, $N=80$). Detection AUC before$\to$after each blind resynthesis attacker. STFT-GL is a near-lossless control (tiny nullspace); mel-GL and EnCodec are lossy (large nullspace). Surface/AudioSeal (energy in the nullspace) collapse to chance; the invariant mel mark survives.}
+\label{tab:e1}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lccccc}
+\toprule
+Watermark & STFT-GL (control) & mel-GL & EnC-6k & EnC-3k & EnC-1.5k \\
+\midrule
+Surface (null) & 1.00$\to$0.48 & 1.00$\to$0.44 & 1.00$\to$0.53 & 1.00$\to$0.54 & 1.00$\to$0.56 \\
+Invariant (mel) & 0.94$\to$0.93 & 0.94$\to$0.93 & 0.94$\to$0.74 & 0.94$\to$0.67 & 0.94$\to$0.60 \\
+AudioSeal & 1.00$\to$1.00 & 1.00$\to$0.20 & 1.00$\to$0.99 & 1.00$\to$0.98 & 1.00$\to$0.94 \\
+\bottomrule
+\end{tabular}
+\end{table}

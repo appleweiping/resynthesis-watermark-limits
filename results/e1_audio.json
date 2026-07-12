@@ -1,0 +1,219 @@
+{
+  "part_a": [
+    {
+      "watermark": "surface_ss",
+      "invariant_fraction": 0.5840305546907503,
+      "snr_db": 23.999999971363806,
+      "auc_before": 1.0,
+      "tpr1_before": 1.0,
+      "attacker": "stft_gl",
+      "auc_after": 0.48,
+      "tpr1_after": 0.3375,
+      "detector_survival": 0.002252736994953415
+    },
+    {
+      "watermark": "surface_ss",
+      "invariant_fraction": 0.5840305546907503,
+      "snr_db": 23.999999971363806,
+      "auc_before": 1.0,
+      "tpr1_before": 1.0,
+      "attacker": "mel80_gl",
+      "auc_after": 0.43765625,
+      "tpr1_after": 0.0,
+      "detector_survival": -0.0029204857525096006
+    },
+    {
+      "watermark": "surface_ss",
+      "invariant_fraction": 0.5840305546907503,
+      "snr_db": 23.999999971363806,
+      "auc_before": 1.0,
+      "tpr1_before": 1.0,
+      "attacker": "encodec6k",
+      "auc_after": 0.52578125,
+      "tpr1_after": 0.1625,
+      "detector_survival": 0.0009507105289249752
+    },
+    {
+      "watermark": "surface_ss",
+      "invariant_fraction": 0.5840305546907503,
+      "snr_db": 23.999999971363806,
+      "auc_before": 1.0,
+      "tpr1_before": 1.0,
+      "attacker": "encodec3k",
+      "auc_after": 0.54421875,
+      "tpr1_after": 0.0375,
+      "detector_survival": 0.0006036931542296145
+    },
+    {
+      "watermark": "surface_ss",
+      "invariant_fraction": 0.5840305546907503,
+      "snr_db": 23.999999971363806,
+      "auc_before": 1.0,
+      "tpr1_before": 1.0,
+      "attacker": "encodec1.5k",
+      "auc_after": 0.55953125,
+      "tpr1_after": 0.0625,
+      "detector_survival": 0.0014983556074476283
+    },
+    {
+      "watermark": "invariant_ss",
+      "invariant_fraction": 0.8119940787821589,
+      "snr_db": 23.999972585238222,
+      "auc_before": 0.93625,
+      "tpr1_before": 0.1125,
+      "attacker": "stft_gl",
+      "auc_after": 0.933125,
+      "tpr1_after": 0.1,
+      "detector_survival": 0.9869762872551471
+    },
+    {
+      "watermark": "invariant_ss",
+      "invariant_fraction": 0.8119940787821589,
+      "snr_db": 23.999972585238222,
+      "auc_before": 0.93625,
+      "tpr1_before": 0.1125,
+      "attacker": "mel80_gl",
+      "auc_after": 0.926875,
+      "tpr1_after": 0.075,
+      "detector_survival": 0.9462429476101197
+    },
+    {
+      "watermark": "invariant_ss",
+      "invariant_fraction": 0.8119940787821589,
+      "snr_db": 23.999972585238222,
+      "auc_before": 0.93625,
+      "tpr1_before": 0.1125,
+      "attacker": "encodec6k",
+      "auc_after": 0.74328125,
+      "tpr1_after": 0.0125,
+      "detector_survival": 0.4037669844765402
+    },
+    {
+      "watermark": "invariant_ss",
+      "invariant_fraction": 0.8119940787821589,
+      "snr_db": 23.999972585238222,
+      "auc_before": 0.93625,
+      "tpr1_before": 0.1125,
+      "attacker": "encodec3k",
+      "auc_after": 0.66828125,
+      "tpr1_after": 0.0125,
+      "detector_survival": 0.26595270703557544
+    },
+    {
+      "watermark": "invariant_ss",
+      "invariant_fraction": 0.8119940787821589,
+      "snr_db": 23.999972585238222,
+      "auc_before": 0.93625,
+      "tpr1_before": 0.1125,
+      "attacker": "encodec1.5k",
+      "auc_after": 0.596875,
+      "tpr1_after": 0.0125,
+      "detector_survival": 0.1508372866093933
+    },
+    {
+      "watermark": "audioseal",
+      "invariant_fraction": 0.2618674956849187,
+      "snr_db": 27.497476906097983,
+      "auc_before": 1.0,
+      "tpr1_before": 1.0,
+      "bitacc_before": 1.0,
+      "attacker": "stft_gl",
+      "auc_after": 0.9996875,
+      "tpr1_after": 0.9875,
+      "detector_survival": 0.21555277887433538,
+      "bitacc_after": 0.73203125
+    },
+    {
+      "watermark": "audioseal",
+      "invariant_fraction": 0.2618674956849187,
+      "snr_db": 27.497476906097983,
+      "auc_before": 1.0,
+      "tpr1_before": 1.0,
+      "bitacc_before": 1.0,
+      "attacker": "mel80_gl",
+      "auc_after": 0.20328125,
+      "tpr1_after": 0.025,
+      "detector_survival": 0.0004428144301394745,
+      "bitacc_after": 0.48203125
+    },
+    {
+      "watermark": "audioseal",
+      "invariant_fraction": 0.2618674956849187,
+      "snr_db": 27.497476906097983,
+      "auc_before": 1.0,
+      "tpr1_before": 1.0,
+      "bitacc_before": 1.0,
+      "attacker": "encodec6k",
+      "auc_after": 0.99171875,
+      "tpr1_after": 0.575,
+      "detector_survival": 0.6345896215785946,
+      "bitacc_after": 0.60625
+    },
+    {
+      "watermark": "audioseal",
+      "invariant_fraction": 0.2618674956849187,
+      "snr_db": 27.497476906097983,
+      "auc_before": 1.0,
+      "tpr1_before": 1.0,
+      "bitacc_before": 1.0,
+      "attacker": "encodec3k",
+      "auc_after": 0.98078125,
+      "tpr1_after": 0.5125,
+      "detector_survival": 0.552063827937664,
+      "bitacc_after": 0.521875
+    },
+    {
+      "watermark": "audioseal",
+      "invariant_fraction": 0.2618674956849187,
+      "snr_db": 27.497476906097983,
+      "auc_before": 1.0,
+      "tpr1_before": 1.0,
+      "bitacc_before": 1.0,
+      "attacker": "encodec1.5k",
+      "auc_after": 0.94234375,
+      "tpr1_after": 0.4125,
+      "detector_survival": 0.4340463473322247,
+      "bitacc_after": 0.52421875
+    }
+  ],
+  "part_b": [
+    {
+      "beta": 0.0,
+      "invariant_fraction": 0.5841037661686925,
+      "auc_before": 1.0,
+      "auc_after": 0.51046875
+    },
+    {
+      "beta": 0.2,
+      "invariant_fraction": 0.6231403461214684,
+      "auc_before": 1.0,
+      "auc_after": 0.70875
+    },
+    {
+      "beta": 0.4,
+      "invariant_fraction": 0.6645595752367914,
+      "auc_before": 1.0,
+      "auc_after": 0.76453125
+    },
+    {
+      "beta": 0.6,
+      "invariant_fraction": 0.7094477302280013,
+      "auc_before": 1.0,
+      "auc_after": 0.845
+    },
+    {
+      "beta": 0.8,
+      "invariant_fraction": 0.760185642613179,
+      "auc_before": 1.0,
+      "auc_after": 0.8384375
+    },
+    {
+      "beta": 1.0,
+      "invariant_fraction": 0.8293991383434868,
+      "auc_before": 0.95609375,
+      "auc_after": 0.94578125
+    }
+  ],
+  "n_utt": 80,
+  "clip_sec": 3.0
+}
