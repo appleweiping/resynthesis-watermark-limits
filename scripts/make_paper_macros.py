@@ -50,7 +50,8 @@ def load_e1() -> dict:
     p = ROOT / "results" / "e1_survival.json"
     if p.exists():
         return json.loads(p.read_text(encoding="utf-8"))
-    shards = sorted((ROOT / "results").glob("e1_survival_*.json"))
+    shards = sorted(p for p in (ROOT / "results").glob("e1_survival_*.json")
+                  if not p.stem.endswith(("_a", "_b")))
     if not shards:
         raise SystemExit("FATAL: no e1_survival results — run E1 first")
     merged = None
