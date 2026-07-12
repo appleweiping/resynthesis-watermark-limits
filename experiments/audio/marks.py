@@ -205,8 +205,30 @@ def scale_to_pesq(
     return delta, achieved, snr
 
 
-# ---- diagnostic separability probe ---------------------------------------------
+# ---- diagnostic separability probes ---------------------------------------------
 def probe_score(y: torch.Tensor, delta: torch.Tensor) -> float:
-    """Genie-aided matched-filter score t(y) = <y, delta>/||delta|| (separability probe)."""
+    """WAVEFORM-domain genie probe t(y) = <y, delta>/||delta||.
+
+    Sensitive to attacks that re-derive phase/fine structure even when the
+    magnitude pattern survives — i.e., it measures waveform-domain transmission.
+    """
     d = delta / torch.linalg.norm(delta).clamp_min(1e-12)
     return float(torch.dot(y.flatten(), d.flatten()))
+
+
+def mel_probe_direction(an, x: torch.Tensor, delta: torch.Tensor) -> torch.Tensor:
+    """Unit-norm mel-domain pattern written by delta: (A(x+d)-A(x)) / ||.||."""
+    dmel = an.mel(x + delta) - an.mel(x)
+    n = torch.linalg.norm(dmel)
+    return dmel / n.clamp_min(1e-12)
+
+
+def probe_score_mel(an, y_mel: torch.Tensor, dmel_unit: torch.Tensor) -> float:
+    """MEL-domain genie probe t(y) = <A(y), dmel_unit> (fixed mel-reading detector).
+
+    Measures transmission of the embedded magnitude pattern through the channel;
+    blind to phase-domain content by construction. Survival is a property of the
+    (channel, detector-domain) pair — both probes are reported.
+    """
+    m = min(y_mel.shape[-1], dmel_unit.shape[-1])
+    return float(torch.sum(y_mel[..., :m] * dmel_unit[..., :m]))

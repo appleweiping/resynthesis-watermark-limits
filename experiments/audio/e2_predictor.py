@@ -35,8 +35,8 @@ import torch
 from .analysis import MelAnalysis
 from .attackers import build_attackers
 from .data_io import clip_uid, iter_split, load_manifest
-from .marks import (DIRECTION_BUILDERS, mixture_direction, probe_score,
-                    scale_to_snr, verify_direction)
+from .marks import (DIRECTION_BUILDERS, mel_probe_direction, mixture_direction,
+                    probe_score, probe_score_mel, scale_to_snr, verify_direction)
 from .metrics_audio import auc_oriented, auc_raw
 
 SR = 16_000
@@ -75,13 +75,15 @@ def run_split(split: str, man: dict, attackers, an: MelAnalysis, args,
     xs = {uid: torch.as_tensor(x, device=device) for uid, x in clips}
     uids = list(xs)
 
-    # cache attacked CLEAN clips per (attacker, uid) — shared negatives
+    # cache attacked CLEAN clips (waveform + unified-mel) per (attacker, uid)
     clean_attacked: dict = {}
+    clean_attacked_mel: dict = {}
     for att in attackers:
         for uid in uids:
-            clean_attacked[(att.name, uid)] = torch.as_tensor(
-                att.apply(xs[uid].cpu().numpy()), device=device)
-        print(f"[E2:{split}] cached clean-attacked: {att.name}")
+            ya = torch.as_tensor(att.apply(xs[uid].cpu().numpy()), device=device)
+            clean_attacked[(att.name, uid)] = ya
+            clean_attacked_mel[(att.name, uid)] = an.mel(ya)
+        print(f"[E2:{split}] cached clean-attacked: {att.name}", flush=True)
 
     points, verif = [], []
     for di in range(args.n_dirs):
@@ -89,7 +91,8 @@ def run_split(split: str, man: dict, attackers, an: MelAnalysis, args,
         # each direction sees m utterances (rotating window over the split)
         sel = [uids[(di * 7 + j) % len(uids)] for j in range(args.utts_per_dir)]
         sel = list(dict.fromkeys(sel))
-        per_att_scores = {a.name: {"neg": [], "pos": []} for a in attackers}
+        per_att = {a.name: {"neg_w": [], "pos_w": [], "neg_m": [], "pos_m": []}
+                   for a in attackers}
         sens = {a.name: [] for a in attackers}
         mel_fracs, snrs, mag_fracs, centroids = [], [], [], []
         for uid in sel:
@@ -107,21 +110,29 @@ def run_split(split: str, man: dict, attackers, an: MelAnalysis, args,
             snrs.append(snr)
             mag_fracs.append(_stft_mag_fraction(an, x, delta))
             centroids.append(_spectral_centroid(delta.cpu().numpy()))
+            dmel_unit = mel_probe_direction(an, x, delta)
             y_marked = (x + delta).cpu().numpy()
             for att in attackers:
                 sens[att.name].append(att.sensitivity(x, delta))
                 att_marked = torch.as_tensor(att.apply(y_marked), device=device)
                 att_clean = clean_attacked[(att.name, uid)]
-                per_att_scores[att.name]["pos"].append(probe_score(att_marked, delta))
-                per_att_scores[att.name]["neg"].append(probe_score(att_clean, delta))
+                pa = per_att[att.name]
+                pa["pos_w"].append(probe_score(att_marked, delta))
+                pa["neg_w"].append(probe_score(att_clean, delta))
+                pa["pos_m"].append(probe_score_mel(an, an.mel(att_marked), dmel_unit))
+                pa["neg_m"].append(probe_score_mel(
+                    an, clean_attacked_mel[(att.name, uid)], dmel_unit))
         for att in attackers:
-            neg = np.array(per_att_scores[att.name]["neg"])
-            pos = np.array(per_att_scores[att.name]["pos"])
+            pa = per_att[att.name]
+            neg_w, pos_w = np.array(pa["neg_w"]), np.array(pa["pos_w"])
+            neg_m, pos_m = np.array(pa["neg_m"]), np.array(pa["pos_m"])
             points.append({
                 "split": split, "dir": di, "kind": kind, "beta": beta,
                 "attacker": att.name, "n_utts": len(sel),
-                "auc_raw": auc_raw(neg, pos),
-                "auc_oriented": auc_oriented(neg, pos),
+                "auc_raw_wave": auc_raw(neg_w, pos_w),
+                "auc_wave": auc_oriented(neg_w, pos_w),
+                "auc_raw_mel": auc_raw(neg_m, pos_m),
+                "auc_mel": auc_oriented(neg_m, pos_m),
                 "pred_sensitivity": float(np.mean(sens[att.name])),
                 "pred_mel_fraction": float(np.mean(mel_fracs)),
                 "pred_snr_db": float(np.mean(snrs)),
@@ -129,7 +140,7 @@ def run_split(split: str, man: dict, attackers, an: MelAnalysis, args,
                 "pred_spectral_centroid": float(np.mean(centroids)),
             })
         if (di + 1) % 10 == 0:
-            print(f"[E2:{split}] directions {di + 1}/{args.n_dirs}")
+            print(f"[E2:{split}] directions {di + 1}/{args.n_dirs}", flush=True)
     return points, verif
 
 
@@ -216,6 +227,30 @@ def _permutation_test(test_pts, pred_key: str, response: str = "auc_oriented",
             "null_abs_95": float(np.percentile(np.abs(null), 95))}
 
 
+def _necessity_test(test_pts, responses=("auc_wave", "auc_mel"),
+                    quantile: float = 0.10) -> dict:
+    """One-sided implication the theory actually makes: s_W ~ 0 => AUC ~ 0.5
+    in EVERY probe domain. Compare |AUC-0.5| of the bottom-decile-sensitivity
+    points (per attacker) against the rest."""
+    out = {}
+    strata = np.array([p["attacker"] for p in test_pts])
+    s = np.array([p["pred_sensitivity"] for p in test_pts], float)
+    low = np.zeros(len(test_pts), bool)
+    for a in np.unique(strata):
+        idx = np.flatnonzero(strata == a)
+        thr = np.quantile(s[idx], quantile)
+        low[idx[s[idx] <= thr]] = True
+    for resp in responses:
+        y = np.abs(np.array([p[resp] for p in test_pts], float) - 0.5)
+        out[resp] = {
+            "n_low": int(low.sum()),
+            "median_dev_low_sens": float(np.median(y[low])),
+            "median_dev_rest": float(np.median(y[~low])),
+            "max_dev_low_sens": float(np.max(y[low])) if low.any() else None,
+        }
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--manifest", required=True)
@@ -239,19 +274,33 @@ def main() -> None:
 
     preds = ["pred_sensitivity", "pred_mel_fraction", "pred_snr_db",
              "pred_stft_mag_fraction", "pred_spectral_centroid"]
-    evaluation = {p: _fit_eval(fit_pts, test_pts, p) for p in preds}
-    permutation = {p: _permutation_test(test_pts, p) for p in preds}
-
     out = {
         "n_dirs": args.n_dirs, "utts_per_dir": args.utts_per_dir,
         "attackers": PREDICT_ATTACKERS,
         "construction_verification": verif_fit + verif_test,
         "points_fit": fit_pts, "points_test": test_pts,
-        "evaluation": evaluation, "permutation": permutation,
+        "necessity_test": _necessity_test(test_pts),
     }
+    for resp in ("auc_mel", "auc_wave"):
+        out[f"evaluation_{resp}"] = {p: _fit_eval(fit_pts, test_pts, p, resp)
+                                     for p in preds}
+        out[f"permutation_{resp}"] = {p: _permutation_test(test_pts, p, resp)
+                                      for p in preds}
+        # per-attacker within-evaluation for the primary predictor
+        by_att = {}
+        for a in PREDICT_ATTACKERS:
+            f = [p for p in fit_pts if p["attacker"] == a]
+            t = [p for p in test_pts if p["attacker"] == a]
+            by_att[a] = _fit_eval(f, t, "pred_sensitivity", resp, n_boot=500)
+        out[f"by_attacker_{resp}"] = by_att
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(out), encoding="utf-8")
-    print(json.dumps({k: v for k, v in evaluation.items()}, indent=2)[:2000])
+    for resp in ("auc_mel", "auc_wave"):
+        ev = out[f"evaluation_{resp}"]["pred_sensitivity"]
+        pm = out[f"permutation_{resp}"]["pred_sensitivity"]
+        print(f"[E2] {resp}: sens spearman={ev['phi_fit']['spearman']:+.3f} "
+              f"CI={ev['spearman_ci']} perm_p={pm['p_value']:.4g}")
+    print(f"[E2] necessity: {json.dumps(out['necessity_test'])}")
     print(f"[E2] wrote {args.out}")
 
 
