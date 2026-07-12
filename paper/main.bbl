@@ -18,7 +18,7 @@ Patrick O'Reilly, Zeyu Jin, Jiaqi Su, and Bryan Pardo,
 \newblock in {\em ICLR Workshop on GenAI Watermarking}, 2025.
 
 \bibitem{liu2025sok}
-Yizhu Liu et~al.,
+Yizhu Wen, Ashwin Innuganti, Aaron~Bien Ramos, Hanqing Guo, and Qiben Yan,
 \newblock ``{SoK}: How robust is audio watermarking in generative {AI}
   models?,'' 2025,
 \newblock arXiv:2503.19176.
@@ -30,6 +30,20 @@ Xuandong Zhao, Kexun Zhang, Zihao Su, Saastha Vasan, Ilya Grishchenko,
   {AI},''
 \newblock in {\em Advances in Neural Information Processing Systems (NeurIPS)},
   2024.
+
+\bibitem{wen2023treering}
+Yuxin Wen, John Kirchenbauer, Jonas Geiping, and Tom Goldstein,
+\newblock ``Tree-ring watermarks: Fingerprints for diffusion images that are
+  invisible and robust,''
+\newblock in {\em Advances in Neural Information Processing Systems (NeurIPS)},
+  2023.
+
+\bibitem{yang2024gaussianshading}
+Zijin Yang, Kai Zeng, Kejiang Chen, Han Fang, Weiming Zhang, and Nenghai Yu,
+\newblock ``{Gaussian Shading}: Provable performance-lossless image
+  watermarking for diffusion models,''
+\newblock in {\em IEEE/CVF Conf. on Computer Vision and Pattern Recognition
+  (CVPR)}, 2024.
 
 \bibitem{chernoff1952measure}
 Herman Chernoff,

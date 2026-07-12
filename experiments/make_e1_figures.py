@@ -1,0 +1,82 @@
+"""Regenerate the E1 converse-curve figure from results/e1_audio.json (CPU, no torch).
+
+Plots post-laundering detection AUC vs. the invariant-energy fraction f for the
+surface->invariant mixture and the named marks (under the lossy mel-vocoder), and overlays
+a two-parameter converse fit AUC = Phi(a*sqrt(f) + b): the sqrt(f) functional form of
+Theorem 1 with the detector gain a and threshold b fit to the data.  Honest: the fit has
+two free parameters; the *claim* is monotonicity in f, which the fit captures.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import numpy as np
+from scipy.optimize import curve_fit
+from scipy.stats import norm
+
+ROOT = Path(__file__).resolve().parents[1]
+FIG = ROOT / "paper" / "figures"
+
+
+def main() -> None:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    matplotlib.rcParams.update({"font.size": 9, "axes.grid": True, "grid.alpha": 0.3,
+                                "savefig.bbox": "tight", "savefig.dpi": 300})
+
+    d = json.loads((ROOT / "results" / "e1_audio.json").read_text())
+    pb = d["part_b"]
+    named = [r for r in d["part_a"] if r["attacker"].startswith("mel")]
+
+    f_mix = np.array([r["invariant_fraction"] for r in pb])
+    a_mix = np.array([r["auc_after"] for r in pb])
+    f_nm = np.array([r["invariant_fraction"] for r in named])
+    a_nm = np.array([r["auc_after"] for r in named])
+
+    # Two-parameter converse fit AUC = Phi(a*sqrt(f) + b) over all points.
+    f_all = np.concatenate([f_mix, f_nm])
+    a_all = np.clip(np.concatenate([a_mix, a_nm]), 1e-3, 1 - 1e-3)
+    model = lambda f, a, b: norm.cdf(a * np.sqrt(f) + b)
+    (a_hat, b_hat), _ = curve_fit(model, f_all, a_all, p0=[3.0, -2.0], maxfev=10000)
+    fg = np.linspace(f_all.min() * 0.95, 1.0, 100)
+
+    fig, ax = plt.subplots(figsize=(3.5, 2.7))
+    ax.plot(fg, model(fg, a_hat, b_hat), "-", color="0.5", lw=1.1,
+            label=r"$\Phi(a\sqrt{f}+b)$ fit", zorder=2)
+    ax.scatter(f_mix, a_mix, c="C0", s=34, zorder=3, label="mixture (mel-GL)")
+    ax.scatter(f_nm, a_nm, c="C3", marker="^", s=44, zorder=4, label="named marks (mel-GL)")
+    ax.axhline(0.5, color="0.4", lw=0.8, ls=":")
+    ax.set_xlabel(r"invariant-energy fraction $f$")
+    ax.set_ylabel("detection AUC after laundering")
+    ax.set_ylim(0.45, 1.02)
+    ax.legend(frameon=False, fontsize=7, loc="lower right")
+    fig.tight_layout()
+    fig.savefig(FIG / "fig_e1_auc_vs_fraction.pdf")
+    plt.close(fig)
+    print(f"fit a={a_hat:.2f} b={b_hat:.2f}; wrote fig_e1_auc_vs_fraction.pdf")
+
+    # ---- fig_e2: payload bit-accuracy after mel-inversion vs SNR (legible labels) ----
+    e2 = json.loads((ROOT / "results" / "e2_audio.json").read_text())
+    fig, ax = plt.subplots(figsize=(3.3, 2.6))
+    for wm, (c, m, lab) in {"magnitude": ("C0", "-o", "invariant"),
+                            "surface": ("C3", "-s", "surface")}.items():
+        cur = sorted(e2["curves"][wm], key=lambda r: r["snr_db"])
+        ax.plot([r["snr_db"] for r in cur], [r["bitacc_gl"] for r in cur], m,
+                color=c, ms=4, label=f"{lab}")
+    ax.axhline(0.5, color="0.4", lw=0.8, ls=":")
+    ax.set_xlabel("watermark SNR (dB) $\\;\\leftarrow$ more budget")
+    ax.set_ylabel("payload bit-acc. after laundering")
+    ax.invert_xaxis()
+    ax.set_ylim(0.45, 1.03)
+    ax.legend(frameon=False, fontsize=8, loc="center left")
+    fig.tight_layout()
+    fig.savefig(FIG / "fig_e2_rate_survival.pdf")
+    plt.close(fig)
+    print("wrote fig_e2_rate_survival.pdf")
+
+
+if __name__ == "__main__":
+    main()

@@ -48,10 +48,10 @@
 \maketitle
 
 \begin{abstract}
-Every deployed audio watermark is silently erased when an attacker runs the signal through
-a neural vocoder, codec, or voice-conversion model. This ``regeneration'' collapse has been
-documented empirically many times, yet for speech there is no theory of \emph{why} it
-happens or \emph{what could survive}. We supply it. We model any blind generative launderer
+Audio watermarks are increasingly defeated when an attacker regenerates the signal through a
+vocoder or codec; this ``regeneration'' collapse is widely documented, yet for speech there is
+no theory of \emph{which} watermarks die, under \emph{which} attacker, or \emph{what can
+survive}. We supply one. We model any blind analysis--resynthesis launderer
 as a \emph{resynthesis channel} $\W=\mathcal{S}\circ\A$: an analysis map $\A$ that keeps
 only the perceptual invariants of speech (content, speaker, prosody) and a synthesis map
 $\mathcal{S}$ that regenerates a waveform, resampling everything $\A$ discarded. Two matched
@@ -61,13 +61,13 @@ post-hoc schemes---has post-laundering detection error-exponent exactly zero. An
 \emph{achievability}: a watermark aligned to the preserved invariants survives at rate
 $\Rstar$, the capacity of the invariant sub-channel. The survivable set is exactly the
 non-nullspace of $\A$. On LibriSpeech, a surface mark and AudioSeal collapse under lossy
-resynthesis (mel-vocoder, low-rate EnCodec) while an invariant-aligned mark survives and
+resynthesis (mel-spectrogram inversion, low-rate EnCodec) while an invariant-aligned mark survives and
 degrades gracefully as the channel keeps less; post-laundering detectability is a single
 monotone function of the invariant-energy fraction, as the converse predicts.
 \end{abstract}
 
 \begin{keywords}
-audio watermarking, generative AI, provenance, data-processing inequality, voice conversion
+audio watermarking, generative AI, provenance, data-processing inequality, hypothesis testing
 \end{keywords}
 
 \section{Introduction}
@@ -81,27 +81,31 @@ chance~\cite{oreilly2025shallow,liu2025sok}. This is not incidental noise---it i
 operation of any generative model, and it defeats watermarks that survive conventional
 distortions (noise, MP3, resampling).
 
-The phenomenon is thoroughly \emph{measured} but, for audio, not \emph{explained}. For images,
-Zhao \emph{et al.}~\cite{zhao2024invisible} prove diffusion/VAE regeneration provably removes
-pixel-space watermarks. Audio is not a port: its imperceptibility is governed by psychoacoustic
-masking and phase-insensitivity (an enormous inaudible subspace), and its generators are
-\emph{analysis--resynthesis} systems whose preserved quantities---linguistic content, speaker
-identity, prosody---are concrete and \emph{measurable}. That structure lets us prove something
-the image results cannot: not only that surface watermarks die, but exactly \emph{what survives
-and at what rate}.
+The phenomenon is thoroughly \emph{measured} but, for audio, not \emph{explained}. For images
+this is well understood: Zhao \emph{et al.}~\cite{zhao2024invisible} prove regeneration removes
+pixel-space watermarks and prescribe embedding in preserved \emph{semantic} content, and
+semantic/latent-space image watermarks (Tree-Ring~\cite{wen2023treering}, Gaussian
+Shading~\cite{yang2024gaussianshading}) realize exactly that. What is missing---and what we
+provide---is a \emph{quantitative theory for speech}: a matched converse and achievability that
+pin down not just \emph{that} surface marks die but \emph{how much} detectability survives and at
+what \emph{rate} $\Rstar$, exploiting the concrete, estimable invariants of audio
+analysis--resynthesis (content, speaker, prosody) and the phase/masking geometry specific to
+hearing.
 
 \noindent\textbf{Contributions.}
 (i) We cast blind generative laundering as a \emph{resynthesis channel} $\W=\mathcal S\circ\A$
 (\S\ref{sec:model}).
 (ii) A \emph{converse} (Thm.~\ref{thm:converse}): watermark energy in $\ker\A$ has zero
-surviving detection exponent---a data-processing inequality that explains the universal
-collapse, sharpened for audio by phase/masking.
+surviving detection exponent---a data-processing inequality that explains the collapse,
+sharpened for audio by phase/masking.
 (iii) A matched \emph{achievability} (Thm.~\ref{thm:achieve}): an invariant-aligned watermark
 survives at rate $\Rstar$, the invariant sub-channel capacity; the survivable set is exactly
 the non-nullspace of $\A$.
-(iv) Validation on real speech (\S\ref{sec:exp}): with Griffin--Lim and EnCodec attackers,
-AudioSeal and a surface mark collapse to chance exactly as the measured surviving-energy
-fraction vanishes, while an invariant-aligned mark survives---the theory tracks the numbers.
+(iv) Validation on real speech (\S\ref{sec:exp}): across analysis--resynthesis channels of
+increasing nullspace (STFT and mel-spectrogram inversion, and an EnCodec codec), a surface mark
+and AudioSeal collapse when their energy lies in the channel's nullspace, while an invariant
+mark survives and degrades gracefully as the preserved subspace shrinks; post-laundering
+detectability is monotone in the invariant-energy fraction, as the converse predicts.
 
 \section{The resynthesis channel}
 \label{sec:model}
@@ -209,18 +213,21 @@ $\norm{P\delta}^2/\norm{\delta}^2$.
 Table~\ref{tab:e1} gives Part~A, and it sweeps exactly the nullspace-size axis. The STFT
 control has the \emph{smallest} nullspace (phase only): it already erases the phase-based
 surface mark (AUC $\to 0.5$) yet preserves both magnitude-domain marks. Enlarging the nullspace
-to phase \emph{plus} sub-mel detail (the mel-vocoder) additionally collapses AudioSeal
-(AUC $1.00\!\to\!\aucAudiosealMel$, bit-accuracy $\bitaccAudiosealMel$, chance $0.5$), while the
-invariant mel mark is untouched ($\aucInvMelBefore{}\!\to\!\aucInvMel$). Shrinking the invariant
-subspace further with low-rate EnCodec then \emph{gracefully erodes} even the invariant mark
-($0.74/0.67/0.60$ at $6/3/1.5$\,kbps)---the behaviour of $\Rstar$ in Thm.~\ref{thm:achieve} as
-the channel keeps less. Survival is \emph{attacker-specific and predicted by $f$}: AudioSeal
-($f=\fracAudioseal$, energy outside the mel envelope) resists the codec it was hardened against
-but not the mel-vocoder, whose nullspace contains the phase and fine detail it relies on; the
-invariant mark ($f=\fracInv$) sits in the preserved subspace. Part~B makes this quantitative: sweeping a
-mixture from surface to invariant, post-laundering AUC is a single monotone function of $f$,
-tracking $\Phi(\sqrt f\,d_0)$ (Fig.~\ref{fig:e1})---detectability is destroyed in proportion to
-the energy the channel discards, as Thm.~\ref{thm:converse} predicts.
+to phase \emph{plus} sub-mel detail (mel-spectrogram inversion) additionally collapses AudioSeal
+(AUC $1.00\!\to\!\aucAudiosealMel$, bit-accuracy $\bitaccAudiosealMel$; the sub-$0.5$ AUC is a
+detector sign-flip, detection destroyed either way), while the invariant mel mark is untouched
+($\aucInvMelBefore{}\!\to\!\aucInvMel$). Shrinking the invariant subspace further with low-rate
+EnCodec then \emph{gracefully erodes} even the invariant mark ($0.74/0.67/0.60$ at
+$6/3/1.5$\,kbps)---the behaviour of $\Rstar$ in Thm.~\ref{thm:achieve} as the channel keeps
+less. Here $f$ is measured against the \emph{mel} analysis map, so it predicts the mel-inversion
+outcomes; each attacker has its own preserved subspace (a channel-relative $f_\W$), which is why
+AudioSeal ($f=\fracAudioseal$, little energy in the mel envelope) resists the EnCodec it was
+hardened against yet dies under mel-inversion, whose nullspace contains the phase and fine
+detail it relies on. The invariant mark ($f=\fracInv$) sits in the mel-preserved subspace. Part~B makes this quantitative: sweeping a
+mixture from surface to invariant, post-laundering AUC is a monotone function of $f$, well
+described by the converse's $\sqrt f$ form $\Phi(a\sqrt f+b)$ (Fig.~\ref{fig:e1})---near chance
+until $f$ exceeds the surface floor, then rising as the preserved invariant energy grows, as
+Thm.~\ref{thm:converse} predicts.
 
 \begin{figure}[t]
   \centering
@@ -234,10 +241,10 @@ the energy the channel discards, as Thm.~\ref{thm:converse} predicts.
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.86\linewidth]{fig_e1_auc_vs_fraction.pdf}
-  \caption{Real speech (mel-vocoder channel). Post-laundering detection AUC vs.\ the
-  invariant-energy fraction $f$. A surface$\to$invariant mixture (circles) and the three named
-  marks (triangles) all lie on the converse curve $\Phi(\sqrt{f}\,d_0)$; low-$f$ marks collapse
-  to chance, the high-$f$ invariant mark survives.}
+  \caption{Real speech (mel-inversion channel). Post-laundering detection AUC vs.\ the
+  invariant-energy fraction $f$. A surface$\to$invariant mixture (circles) and the named marks
+  (triangles) follow the converse's $\sqrt f$ form $\Phi(a\sqrt f+b)$ (two-parameter fit); low-$f$
+  marks collapse to chance, the high-$f$ invariant mark survives.}
   \label{fig:e1}
 \end{figure}
 
@@ -248,7 +255,7 @@ the energy the channel discards, as Thm.~\ref{thm:converse} predicts.
   \IfFileExists{figures/fig_e2_rate_survival.pdf}
     {\includegraphics[width=0.86\linewidth]{fig_e2_rate_survival.pdf}}
     {\framebox[0.86\linewidth]{\rule{0pt}{2.2cm}\small fig\_e2 pending}}
-  \caption{Achievability. Payload bit-accuracy after mel-vocoder laundering vs.\ imperceptibility
+  \caption{Achievability. Payload bit-accuracy after mel-inversion laundering vs.\ imperceptibility
   budget (SNR). The invariant sub-channel carries a surviving payload; a surface payload of equal
   size decays to chance.}
   \label{fig:e2}
@@ -266,17 +273,24 @@ The converse targets a \emph{blind, non-adaptive} attacker running a generic res
 this matches the empirical-collapse literature and yields the clean DPI. A key-aware attacker
 that optimizes to remove our specific mark is an arms race we do not claim to win---we treat it
 as a stress test, not a core result. Real analysis maps are only approximately sufficient and
-$\mathcal S$ is stochastic; our claims degrade gracefully as these idealizations break. The
-practical message is prescriptive: \emph{a watermark survives generative laundering only insofar
-as it perturbs the invariants the generator is built to preserve}---which is also the regime
-where imperceptibility is hardest, quantified by $\Rstar$.
+$\mathcal S$ is stochastic; our claims degrade gracefully as these idealizations break. Two
+honest limitations: marks are matched by SNR rather than a perceptual metric (PESQ/ViSQOL), so
+part of the invariant mark's survival may be bought with audibility; and our synthesizers are
+spectral-inversion and a neural codec---a learned neural vocoder and voice conversion would test
+the converse in its hardest regime. The practical message is prescriptive: \emph{a watermark
+survives generative laundering only insofar as it perturbs the invariants the generator is built
+to preserve}---the regime where imperceptibility is hardest, quantified by $\Rstar$.
 
 \section{Relation to prior work}
 Empirical audio watermarks~\cite{sanroman2024audioseal,chen2023wavmark} and attack/SoK
 studies~\cite{oreilly2025shallow,liu2025sok} document the collapse; we explain it and bound
-what survives. Zhao \emph{et al.}~\cite{zhao2024invisible} prove removability for \emph{images};
-we give a matched converse \emph{and} achievability for \emph{speech}, exploiting the named,
-estimable invariants of analysis--resynthesis. Classical information-theoretic
+what survives. In the image domain the story is understood: Zhao \emph{et
+al.}~\cite{zhao2024invisible} prove removability and advocate semantic embedding, and
+Tree-Ring~\cite{wen2023treering} and Gaussian Shading~\cite{yang2024gaussianshading} realize
+regeneration-robust semantic watermarks. Our contribution is not the qualitative
+``embed-in-what-survives'' idea but a \emph{quantitative, provable} matched converse and
+achievability with an explicit surviving \emph{rate} $\Rstar$ for the \emph{speech} resynthesis
+channel, tied to its concrete, measurable invariants. Classical information-theoretic
 watermarking~\cite{moulin2003information,costa1983writing,chen2001quantization} treats fixed
 additive attacks with informed embedding; our attacker is a nonlinear manifold projection and
 our detector is blind, locating survivability in the geometry of $\A$.
@@ -284,7 +298,7 @@ our detector is blind, locating survivability in the geometry of $\A$.
 \section{Conclusion}
 Speech watermarks survive generative laundering exactly to the extent they live in the
 invariant subspace of the resynthesis channel. We proved a matched converse and achievability
-and confirmed on real vocoders and codecs that detection collapses precisely as the surviving
+and confirmed on spectral-inversion and neural-codec channels that detection collapses as the surviving
 energy vanishes. Designing watermarks \emph{in} the invariant sub-channel, at rate $\Rstar$, is
 the path to laundering-robust provenance.
 
