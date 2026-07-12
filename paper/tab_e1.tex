@@ -1,6 +1,6 @@
 \begin{table}[t]
 \centering
-\caption{Real speech (LibriSpeech, $N=80$). Detection AUC before$\to$after each blind attacker. STFT$^\dagger$ is a near-lossless control (nullspace $=$ phase only); mel-GL and EnCodec (EnC$k$, $k$\,kbps) are lossy. Surface/AudioSeal (energy in the nullspace) collapse to chance; the invariant mel mark survives.}
+\caption{Real speech ($N=80$), detection AUC (separability) before$\to$after each blind channel; STFT$^\dagger$ is a near-lossless control, mel-GL and EnCodec (EnC$k$, $k$\,kbps) are lossy. The phase-domain \emph{surface} mark is erased on every channel; \emph{AudioSeal} resists EnCodec but is operationally defeated under mel-inversion (sign-inverted AUC $0.20$, TPR@1\%FPR $0.03$); the \emph{invariant} mel mark's separability survives.}
 \label{tab:e1}
 \scriptsize
 \setlength{\tabcolsep}{2.4pt}

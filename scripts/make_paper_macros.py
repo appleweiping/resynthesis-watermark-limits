@@ -81,10 +81,12 @@ def main() -> None:
     atts = [a for a in ATT_ORDER if any(r["attacker"] == a for r in recs)]
     lines = [
         r"\begin{table}[t]", r"\centering",
-        r"\caption{Real speech (LibriSpeech, $N=%s$). Detection AUC before$\to$after each "
-        r"blind attacker. STFT$^\dagger$ is a near-lossless control (nullspace $=$ phase only); "
-        r"mel-GL and EnCodec (EnC$k$, $k$\,kbps) are lossy. Surface/AudioSeal (energy in the "
-        r"nullspace) collapse to chance; the invariant mel mark survives.}" % data["n_utt"],
+        r"\caption{Real speech ($N=%s$), detection AUC (separability) before$\to$after each "
+        r"blind channel; STFT$^\dagger$ is a near-lossless control, mel-GL and EnCodec (EnC$k$, "
+        r"$k$\,kbps) are lossy. The phase-domain \emph{surface} mark is erased on every channel; "
+        r"\emph{AudioSeal} resists EnCodec but is operationally defeated under mel-inversion "
+        r"(sign-inverted AUC $0.20$, TPR@1\%%FPR $0.03$); the \emph{invariant} mel mark's "
+        r"separability survives.}" % data["n_utt"],
         r"\label{tab:e1}", r"\scriptsize", r"\setlength{\tabcolsep}{2.4pt}",
         r"\begin{tabular}{l" + "c" * len(atts) + r"}", r"\toprule",
         r"Watermark & " + " & ".join(ATT_LABEL.get(a, a) for a in atts) + r" \\",

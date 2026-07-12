@@ -182,25 +182,19 @@ def make_figures(summary) -> None:
 
     from scipy.optimize import curve_fit
     pb = summary["part_b"]
-    named = [r for r in recs if r["attacker"].startswith("mel")]
+    # Fixed-detector mixture sweep only (named marks use different detectors -> not comparable).
     f_mix = np.array([r["invariant_fraction"] for r in pb])
-    a_mix = np.array([r["auc_after"] for r in pb])
-    f_nm = np.array([r["invariant_fraction"] for r in named])
-    a_nm = np.array([r["auc_after"] for r in named])
-    # Honest two-parameter converse fit AUC = Phi(a*sqrt(f)+b) over all mel-channel points.
-    f_all = np.concatenate([f_mix, f_nm])
-    a_all = np.clip(np.concatenate([a_mix, a_nm]), 1e-3, 1 - 1e-3)
+    a_mix = np.clip(np.array([r["auc_after"] for r in pb]), 1e-3, 1 - 1e-3)
     model = lambda ff, aa, bb: norm.cdf(aa * np.sqrt(ff) + bb)
-    (a_hat, b_hat), _ = curve_fit(model, f_all, a_all, p0=[3.0, -2.0], maxfev=10000)
-    fig, ax = plt.subplots(figsize=(3.5, 2.7))
-    fg = np.linspace(f_all.min() * 0.95, 1.0, 100)
+    (a_hat, b_hat), _ = curve_fit(model, f_mix, a_mix, p0=[3.0, -2.0], maxfev=10000)
+    fig, ax = plt.subplots(figsize=(3.4, 2.6))
+    fg = np.linspace(f_mix.min() * 0.95, 1.0, 100)
     ax.plot(fg, model(fg, a_hat, b_hat), "-", color="0.5", lw=1.1,
             label=r"$\Phi(a\sqrt{f}+b)$ fit", zorder=2)
-    ax.scatter(f_mix, a_mix, c="C0", s=34, zorder=3, label="mixture (mel-inv.)")
-    ax.scatter(f_nm, a_nm, c="C3", marker="^", s=44, zorder=4, label="named marks (mel-inv.)")
+    ax.scatter(f_mix, a_mix, c="C0", s=36, zorder=3, label="mixture, fixed detector")
     ax.axhline(0.5, color="0.4", lw=0.8, ls=":")
     ax.set_xlabel(r"invariant-energy fraction $f$")
-    ax.set_ylabel("detection AUC after laundering")
+    ax.set_ylabel("detection AUC after mel-inversion")
     ax.set_ylim(0.45, 1.02)
     ax.legend(frameon=False, fontsize=7, loc="lower right")
     fig.tight_layout()

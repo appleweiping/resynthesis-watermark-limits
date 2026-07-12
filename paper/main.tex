@@ -60,12 +60,12 @@ $\ker\A$---phase and psychoacoustically masked components, where imperceptibilit
 post-hoc schemes---has post-laundering detection error-exponent exactly zero. An
 \emph{achievability}: a watermark aligned to the preserved invariants survives at rate
 $\Rstar$, the invariant sub-channel's rate. The survivable set is exactly the
-non-nullspace of $\A$. On LibriSpeech, a surface mark is erased by every channel and AudioSeal's
-operational detection collapses under mel-spectrogram inversion (TPR@1\%FPR $1.0\!\to\!0.03$,
-payload at chance)---though it resists the EnCodec it was hardened against---while an
-invariant-aligned mark's separability survives the mel channel and erodes gracefully under the
-codec. For a fixed channel, post-laundering detectability is monotone in the invariant-energy
-fraction, as the converse predicts.
+non-nullspace of $\A$. On LibriSpeech, a phase-domain surface mark is erased by every channel;
+AudioSeal is operationally defeated by mel-spectrogram inversion (TPR@1\%FPR $1.0\!\to\!0.03$,
+payload at chance) yet resists the EnCodec it was hardened against; and an invariant-aligned
+mark's separability survives the mel channel and erodes gracefully under the codec. In a
+controlled sweep with a single fixed detector, post-laundering detectability is monotone in the
+invariant-energy fraction, as the converse predicts.
 \end{abstract}
 
 \begin{keywords}
@@ -79,7 +79,7 @@ answer: imperceptibly embed a key-dependent signal, later detect it to attribute
 synthetic audio~\cite{sanroman2024audioseal,chen2023wavmark}. A now-standard finding is that
 these schemes are fragile to \emph{regeneration}: passing watermarked audio through a neural
 vocoder, neural codec, or voice-conversion (VC) model drives detection to
-chance~\cite{oreilly2025shallow,liu2025sok}. This is not incidental noise---it is the natural
+chance~\cite{oreilly2025shallow,wen2025sok}. This is not incidental noise---it is the natural
 operation of any generative model, and it defeats watermarks that survive conventional
 distortions (noise, MP3, resampling).
 
@@ -104,9 +104,10 @@ sharpened for audio by phase/masking.
 survives at a positive rate $\Rstar$ (the invariant sub-channel rate for a blind embedder); the
 survivable set is exactly the non-nullspace of $\A$.
 (iv) Validation on real speech (\S\ref{sec:exp}): across analysis--resynthesis channels of
-increasing nullspace (STFT and mel-spectrogram inversion, and an EnCodec codec), a surface mark
-and AudioSeal collapse when their energy lies in the channel's nullspace, while an invariant
-mark survives and degrades gracefully as the preserved subspace shrinks; post-laundering
+increasing nullspace (STFT and mel-spectrogram inversion, and an EnCodec codec), a phase-domain
+surface mark is erased everywhere, AudioSeal is operationally defeated by mel-inversion but
+resists the codec it was hardened against, and an invariant mark's separability survives and
+erodes gracefully as the preserved subspace shrinks; in a fixed-detector sweep, post-laundering
 detectability is monotone in the invariant-energy fraction, as the converse predicts.
 
 \section{The resynthesis channel}
@@ -166,7 +167,7 @@ Hearing is largely phase-insensitive and subject to masking, so a vast set of pe
 inaudible; vocoders and codecs discard exactly these (they re-derive phase, quantize masked
 bins). Thus the perceptually cheapest embedding directions lie in $\ker\A$. Post-hoc
 watermarks, optimized for imperceptibility, drift there---and die. This is the theory's
-account of the empirical collapse~\cite{oreilly2025shallow,liu2025sok}.
+account of the empirical collapse~\cite{oreilly2025shallow,wen2025sok}.
 \end{remark}
 
 \section{Achievability: what survives}
@@ -206,36 +207,33 @@ utterances~\cite{panayotov2015librispeech} at 16\,kHz. Attackers instantiate $\W
 \emph{increasing nullspace}: a full linear-STFT Griffin--Lim~\cite{griffin1984signal} (a
 near-lossless \emph{control}: $\ker\A$ is only the phase), a mel-spectrogram Griffin--Lim
 (lossy: $\ker\A$ is phase \emph{plus} all sub-mel detail), and EnCodec~\cite{defossez2022encodec}
-round-trips at $6/3/1.5$\,kbps (nullspace grows as the rate drops). Watermarks at matched SNR
-($\snrInv$\,dB): a \emph{surface} mark (fine high-band carrier, waveform-correlation detector,
-in $\ker\A$), an \emph{invariant} mel-envelope mark (the constructive realization of
-Thm.~\ref{thm:achieve}), and \emph{AudioSeal}, a deployed neural
-watermark~\cite{sanroman2024audioseal}. Each mark's invariant-energy fraction $f$ (STFT-magnitude
-change captured by the mel envelope) is a pure signal-geometry analog of
-$\norm{P\delta}^2/\norm{\delta}^2$.
+round-trips at $6/3/1.5$\,kbps (nullspace grows as the rate drops). Watermarks: a \emph{surface}
+mark (fine high-band carrier with a \emph{waveform} detector that reads phase---in $\ker\A$ of
+every resynthesizer, whatever its magnitude energy), an \emph{invariant} mel-envelope mark (the
+constructive realization of Thm.~\ref{thm:achieve}), and \emph{AudioSeal}~\cite{sanroman2024audioseal},
+a deployed neural watermark. The surface and invariant marks are at $\snrInv$\,dB SNR; AudioSeal
+at its default ($27.5$\,dB, quieter). A mark's mel invariant fraction $f$ (STFT-magnitude change
+captured by the mel envelope) is a signal-geometry analog of $\norm{P\delta}^2/\norm{\delta}^2$
+\emph{for a mel-reading detector}.
 
-Table~\ref{tab:e1} gives Part~A, and it sweeps exactly the nullspace-size axis. The STFT
-control has the \emph{smallest} nullspace (phase only): it already erases the phase-based
-surface mark (AUC $\to 0.5$) yet preserves both magnitude-domain marks. Enlarging the nullspace
-to phase \emph{plus} sub-mel detail (mel-spectrogram inversion) additionally defeats AudioSeal
-\emph{operationally}: TPR@1\%FPR $1.00\!\to\!0.03$ and payload bit-accuracy
-$\bitaccAudiosealMel$ (chance). Its AUC $1.00\!\to\!\aucAudiosealMel$ is a sign-inversion that
-leaves residual separability, consistent with its small \emph{nonzero} $f=\fracAudioseal$
-(partial, not total, information loss).\footnote{We report AUC (separability, the quantity the
-Chernoff exponent governs) as the primary metric. At a stringent $1\%$ FPR the simple
-constructive invariant embedder is weak even on clean audio (TPR $\approx0.11$)---a limitation
-of the proof-of-concept scheme, not of the theory; a learned embedder would tighten it.} The
-invariant mel mark's separability is essentially unchanged ($\aucInvMelBefore{}\!\to\!\aucInvMel$
-AUC). Shrinking the invariant subspace further with low-rate EnCodec then \emph{gracefully
-erodes} it ($0.74/0.67/0.60$ at $6/3/1.5$\,kbps)---the behaviour of $\Rstar$ in
-Thm.~\ref{thm:achieve} as the channel keeps less. Here $f$ is the \emph{mel} invariant fraction,
-predicting the mel-inversion outcomes; each attacker has its own preserved subspace (a
-channel-relative $f_\W$), which is why AudioSeal ($f=\fracAudioseal$, little energy in the mel
-envelope) resists the EnCodec it was hardened against yet dies under mel-inversion. The invariant
-mark ($f=\fracInv$) sits in the mel-preserved subspace. Part~B makes this quantitative: sweeping a
-mixture from surface to invariant, post-laundering AUC is a monotone function of $f$, well
-described by the converse's $\sqrt f$ form $\Phi(a\sqrt f+b)$ (Fig.~\ref{fig:e1})---near chance
-until $f$ exceeds the surface floor, then rising as the preserved invariant energy grows, as
+Table~\ref{tab:e1} reports AUC (separability, the quantity the Chernoff exponent governs) as the
+nullspace grows. Survival is set by the subspace each mark's \emph{detector} reads. The surface
+mark's waveform detector reads phase, so it is erased on \emph{every} channel (AUC$\to0.5$,
+TPR@1\%FPR$\to0$). AudioSeal's learned detector \emph{retains} separability under mel-inversion
+(oriented AUC $0.80$; the raw $\aucAudiosealMel$ is a sign-inversion) yet its \emph{calibrated}
+detector is defeated there (TPR@1\%FPR $1.00\!\to\!0.03$, payload $\bitaccAudiosealMel$ at
+chance), while it \emph{fully} resists the EnCodec it was hardened against ($0.99/0.98/0.94$
+AUC). The invariant mel mark---in the preserved subspace by construction---keeps separability
+under mel-inversion ($\aucInvMelBefore{}\!\to\!\aucInvMel$) and \emph{erodes gracefully} under
+EnCodec (AUC $0.74$, $0.67$, $0.60$ at $6$, $3$, $1.5$\,kbps), the $\Rstar$ behaviour of
+Thm.~\ref{thm:achieve}. Crucially, \emph{no} mark is both operationally strong on clean audio and
+laundering-robust: our constructive invariant embedder is separable (AUC $0.94$) but weak at
+$1\%$ FPR (TPR $0.11$) even clean---the very imperceptibility--robustness tension the theory
+predicts; a learned embedder would tighten it. Because survival is detector-dependent, cross-mark
+comparison is not apples-to-apples; the \emph{controlled} test is Part~B, where a \emph{single
+fixed detector} sweeps a surface$\to$invariant mixture and post-laundering AUC follows the
+converse's $\sqrt f$ form $\Phi(a\sqrt f+b)$ (Fig.~\ref{fig:e1})---near chance until $f$ clears
+the surface floor, then rising as the preserved invariant energy grows, as
 Thm.~\ref{thm:converse} predicts.
 
 \begin{figure}[t]
@@ -250,10 +248,11 @@ Thm.~\ref{thm:converse} predicts.
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.86\linewidth]{fig_e1_auc_vs_fraction.pdf}
-  \caption{Real speech (mel-inversion channel). Post-laundering detection AUC vs.\ the
-  invariant-energy fraction $f$. A surface$\to$invariant mixture (circles) and the named marks
-  (triangles) follow the converse's $\sqrt f$ form $\Phi(a\sqrt f+b)$ (two-parameter fit); low-$f$
-  marks collapse to chance, the high-$f$ invariant mark survives.}
+  \caption{Controlled converse test (mel-inversion). A \emph{single fixed detector} reads a
+  surface$\to$invariant mixture; post-laundering AUC vs.\ the invariant-energy fraction $f$
+  follows the converse's $\sqrt f$ form $\Phi(a\sqrt f+b)$ (two-parameter fit)---near chance until
+  $f$ clears the surface floor, then rising. (Named marks use different detectors and are not
+  comparable on this axis; see Table~\ref{tab:e1}.)}
   \label{fig:e1}
 \end{figure}
 
@@ -292,7 +291,7 @@ to preserve}---the regime where imperceptibility is hardest, quantified by $\Rst
 
 \section{Relation to prior work}
 Empirical audio watermarks~\cite{sanroman2024audioseal,chen2023wavmark} and attack/SoK
-studies~\cite{oreilly2025shallow,liu2025sok} document the collapse; we explain it and bound
+studies~\cite{oreilly2025shallow,wen2025sok} document the collapse; we explain it and bound
 what survives. In the image domain the story is understood: Zhao \emph{et
 al.}~\cite{zhao2024invisible} prove removability and advocate semantic embedding, and
 Tree-Ring~\cite{wen2023treering} and Gaussian Shading~\cite{yang2024gaussianshading} realize
