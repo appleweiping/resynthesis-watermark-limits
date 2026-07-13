@@ -345,11 +345,12 @@ embedder class; real capacities may be higher. The surrogate's closed forms are 
 claimed for nonlinear generators --- for those we claim only Prop.~\ref{prop:general}
 and the \emph{measured} predictive power of $s_\W$. The three deployed baselines run at
 native strength and are not PESQ-equalized (SI-SDR $\sisdrAS/\sisdrWM/\sisdrSC$\,dB);
-AudioSeal carries the most mark energy, so we claim no cross-scheme robustness ranking;
-the survival heterogeneity is \emph{within} AudioSeal (WavMark and SilentCipher run at
-maximum strength yet are still fully erased, so energy cannot explain their collapse).
-Survival statements are about oriented separability or calibrated operating points, never
-raw sub-$0.5$ AUC read as erasure.
+AudioSeal carries the most mark energy, so we claim no cross-scheme ranking; the survival
+heterogeneity we analyze is \emph{within} AudioSeal (constant energy, varying channel).
+WavMark's and SilentCipher's collapses are \emph{structural} (a decoder sync failure; a
+continuous-detector chance collapse), not amplitude effects. Survival statements are about
+oriented separability or calibrated operating points, never raw sub-$0.5$ AUC read as
+erasure.
 
 \section{Conclusion}
 A restricted but precise subspace model of analysis--resynthesis explains, with
