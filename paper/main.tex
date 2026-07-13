@@ -37,6 +37,10 @@
   \newcommand{\nullLeakOp}{[pending]}
   \newcommand{\rowLeakOp}{[pending]}
   \newcommand{\spearmanSensWave}{[pending]}
+  \newcommand{\necLowMel}{[pending]}\newcommand{\necRestMel}{[pending]}
+  \newcommand{\necLowWave}{[pending]}\newcommand{\necMaxLowMel}{[pending]}
+  \newcommand{\pesqAS}{[pending]}\newcommand{\pesqWM}{[pending]}\newcommand{\pesqSC}{[pending]}
+  \newcommand{\sisdrAS}{[pending]}\newcommand{\sisdrWM}{[pending]}\newcommand{\sisdrSC}{[pending]}
   \newcommand{\necLowMel}{[pending]}
   \newcommand{\necRestMel}{[pending]}
   \newcommand{\necLowWave}{[pending]}
@@ -66,12 +70,12 @@ On LibriSpeech ($\nTest$ speaker-disjoint test clips, thresholds from $\nCalib$ 
 calibration clips), across five resynthesis families (spectral inversion, a neural vocoder,
 and three neural codecs), the predictor tracks held-out post-attack separability within
 every attacker (pooled Spearman $\spearmanSens$, perm.\ $p\permP$), while SNR and
-spectral-centroid controls fail. Deployed watermarks (AudioSeal, WavMark, SilentCipher) at
-matched perceptual quality lose their calibrated operating point under nearly every lossy
-channel, in modes we keep separate: \emph{erasure} (separability itself collapses),
-\emph{calibration failure} (separability remains but the fixed threshold's false-alarm rate
-explodes on attacked clean audio), and \emph{graceful degradation} (recall falls but
-detection still works).
+spectral-centroid controls fail. Deployed watermarks (AudioSeal, WavMark, SilentCipher),
+each at its native transparent strength, lose their calibrated operating point under
+nearly every lossy channel, in modes we keep separate: \emph{erasure} (separability itself
+collapses), \emph{calibration failure} (separability remains but the fixed threshold's
+false-alarm rate explodes on attacked clean audio), and \emph{graceful degradation}
+(recall falls but detection still works).
 \end{abstract}
 
 \begin{keywords}
@@ -113,10 +117,10 @@ moulin2003information} can exceed it and no rate converse is claimed (\S\ref{sec
 sensitivity --- validated on \emph{held-out, speaker-disjoint} data across five
 resynthesis families against competing predictors, with permutation controls
 (\S\ref{sec:exp}).
-(v)~A calibrated operational evaluation of deployed watermarks at matched perceptual
-quality, separating loss of \emph{separability} (oriented AUC) from loss of the
-\emph{calibrated operating point} (TPR and \emph{achieved} FPR at a threshold fixed on
-an independent calibration set) --- distinctions routinely conflated (\S\ref{sec:exp}).
+(v)~A calibrated operational evaluation of deployed watermarks, separating loss of
+\emph{separability} (oriented AUC) from loss of the \emph{calibrated operating point}
+(TPR and \emph{achieved} FPR at a threshold fixed on an independent calibration set) ---
+distinctions routinely conflated (\S\ref{sec:exp}).
 
 \section{The analysis--resynthesis channel}
 \label{sec:model}
@@ -244,12 +248,13 @@ every attacker} (per-attacker Spearman $\rhoMelmelgl/\rhoMelvocos/\rhoMelencodec
 \rhoMeldac/\rhoMelsnac$; pooled $\spearmanSens$, permutation $p\permP$), as does the
 static magnitude-change fraction ($\spearmanMagFrac$) --- both \emph{geometric}
 quantities --- while budget (SNR, $\spearmanSNR$) and spectral centroid
-($\spearmanCentroid$) do not. The theory's \emph{one-sided} implication
-(Prop.~\ref{prop:general}: $s_\W\!\to\!0$ forces chance) holds out-of-sample: the
-$\necNLow$ directions in the near-null regime ($s_\W\!\le\!0.25\times$ median; they
-exist only for the mel-analysis channels --- the codecs' kernels are too small to
-reach) deviate from chance by median $\necLowMel$, \emph{maximum} $\necMaxLowMel$,
-versus $\necRestMel$ for the rest. In the \emph{waveform} domain the codecs show the
+($\spearmanCentroid$) do not. Empirically, the near-null regime behaves as the
+exact-erasure condition (Prop.~\ref{prop:general}) would suggest: the $\necNLow$
+directions with $s_\W\!\le\!0.25\times$ median (they exist only for the mel-analysis
+channels --- the codecs' kernels are too small to reach) deviate from chance by median
+$\necLowMel$, \emph{maximum} $\necMaxLowMel$, versus $\necRestMel$ for the rest --- an
+observed monotonicity of the predictor, not a proof that Prop.~\ref{prop:general} holds
+for these nonlinear channels. In the \emph{waveform} domain the codecs show the
 \emph{opposite} dependence ($\rho_s=\rhoWaveEncodec$ EnCodec, $\rhoWaveSnac$ SNAC):
 they transmit precisely the sub-mel detail that mel analysis discards --- survival is
 a property of the (channel, detector-domain) pair, not of the watermark alone.
@@ -264,27 +269,31 @@ a property of the (channel, detector-domain) pair, not of the watermark alone.
   \label{fig:e2}
 \end{figure}
 
-\noindent\textbf{E1 --- deployed watermarks at matched perceptual quality.}
+\noindent\textbf{E1 --- deployed watermarks.}
 AudioSeal~\cite{sanroman2024audioseal}, WavMark~\cite{chen2023wavmark}, and
-SilentCipher~\cite{singh2024silentcipher}, each tuned to the same median PESQ target
-before attack --- no audible-vs-transparent comparisons. Per (baseline, attacker, key)
+SilentCipher~\cite{singh2024silentcipher}, each at its native full strength --- all in
+the transparent regime but not equalized (clean-embed PESQ $\pesqAS/\pesqWM/\pesqSC$;
+we do not force a common PESQ, which would push each scheme off its designed operating
+point, and we note below that AudioSeal carries the most energy). Per (baseline,
+attacker, key)
 we report oriented AUC (utterance-clustered bootstrap CIs) and the calibrated operating
 point --- TPR \emph{and achieved FPR} at the 1\%-FPR threshold fixed on \nCalib{}
 independent clean negatives (Clopper--Pearson intervals) --- plus an attack-aware
-recalibration diagnostic (Table~\ref{tab:e1}). All three baselines are perfect on the
-near-lossless STFT control and lose their operating point under nearly all nine lossy
-channels, in three distinct modes. \emph{Erasure} (separability collapses): SilentCipher
-and WavMark under all nine lossy channels (AUC $0.99\!\to\!0.50$, TPR $\to\!0.00$,
-nothing recoverable by recalibration); AudioSeal under SNAC and self-VC, and to a weaker
-degree under mel-inversion (AUC $0.57$, operationally dead at TPR $0.01$).
-\emph{Calibration failure} (separability retained, calibration breaks): under EnCodec
-AudioSeal keeps AUC $0.93/0.81$ yet the fixed threshold's false-alarm rate explodes
-($0.01\!\to\!0.73/0.80$) as the codec round-trip pushes \emph{clean} audio across the
-boundary. \emph{Graceful degradation}: AudioSeal survives DAC with a still-calibrated
-detector (AUC $0.93$, FPR $0.01$) at reduced recall (TPR $0.64$). Survival is
-channel-specific in exactly the way the subspace picture suggests --- what a scheme's
-detector reads, relative to what each channel preserves and how it moves clean signals
---- and no sign/order inversion of scores occurred anywhere in the final protocol.
+recalibration diagnostic (Table~\ref{tab:e1}). We keep two questions separate: does
+\emph{separability} survive (oriented AUC, CI vs.\ $0.5$) and does the \emph{calibrated
+operating point} survive (TPR at the fixed-threshold's achieved FPR)? All three baselines
+are perfect on the near-lossless STFT control. SilentCipher and WavMark lose \emph{both}
+under all nine lossy channels (\emph{erasure}: AUC $0.99\!\to\!0.50$, TPR $\to\!0.00$,
+unrecoverable). AudioSeal is more varied: separability is \emph{erased} only by SNAC and
+self-VC (AUC $\to\!0.50$--$0.51$, CI covers $0.5$); under mel-inversion, Vocos and
+Vocos-EnCodec it retains \emph{weak} separability (AUC $0.54$--$0.63$, CIs above $0.5$)
+but the operating point is dead (TPR $\le0.07$); under EnCodec it keeps \emph{strong}
+separability (AUC $0.93/0.81$) yet the fixed threshold's FPR explodes
+($0.01\!\to\!0.73/0.80$) as the codec pushes \emph{clean} audio across the boundary (a
+\emph{calibration failure}); and under DAC it merely \emph{degrades} (AUC $0.93$, FPR
+$0.01$, recall $0.64$). Survival is channel-specific in the way the subspace picture
+suggests --- what a scheme's detector reads, relative to what each channel preserves and
+how it moves clean signals --- and no sign/order inversion occurred in the final protocol.
 
 \noindent\textbf{E3 --- multi-bit proof of concept (no rate claim).}
 An $8$-bit payload in the unified mel domain (frame-differential BPSK, fully
@@ -317,9 +326,11 @@ invariance --- our constructed kernel marks realize it only to first order, with
 measured second-order leakage at operating amplitude. $\Rlb$ concerns a restricted
 embedder class; real capacities may be higher. The surrogate's closed forms are not
 claimed for nonlinear generators --- for those we claim only Prop.~\ref{prop:general}
-and the \emph{measured} predictive power of $s_\W$. Survival statements are about
-oriented separability or calibrated operating points, never raw sub-0.5 AUC read as
-erasure.
+and the \emph{measured} predictive power of $s_\W$. The three deployed baselines run at
+native strength and are not PESQ-equalized (SI-SDR $\sisdrAS/\sisdrWM/\sisdrSC$\,dB);
+AudioSeal carries the most mark energy, so its greater survival under DAC/EnCodec is
+partly a strength effect we do not disentangle. Survival statements are about oriented
+separability or calibrated operating points, never raw sub-$0.5$ AUC read as erasure.
 
 \section{Conclusion}
 A restricted but precise subspace model of analysis--resynthesis explains, with

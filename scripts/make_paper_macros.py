@@ -168,6 +168,20 @@ def macros(e1: dict, e2: dict, e3: dict) -> list[str]:
         f"\\newcommand{{\\pocBits}}{{{e3['bits']}}}",
         f"\\newcommand{{\\pocPesq}}{{{f2(e3['pesq_median'])}}}",
     ]
+    # per-baseline clean-embed quality (the schemes are NOT matched — each saturates
+    # at native full strength; report the true spread + SI-SDR energy proxy). Average
+    # over keys and emit ONCE per baseline (LaTeX \newcommand rejects redefinition).
+    bl_key = {"audioseal": "AS", "wavmark": "WM", "silentcipher": "SC"}
+    q_by_bl: dict = {}
+    for r in e1["rows"]:
+        if r["attacker"] == "none" and "quality" in r and r["baseline"] in bl_key:
+            q_by_bl.setdefault(r["baseline"], []).append(r["quality"])
+    for bl, k in bl_key.items():
+        if bl in q_by_bl:
+            pe = np.mean([q["pesq_median"] for q in q_by_bl[bl]])
+            si = np.mean([q["si_sdr_median"] for q in q_by_bl[bl]])
+            lines.append(f"\\newcommand{{\\pesq{k}}}{{{f2(pe)}}}")
+            lines.append(f"\\newcommand{{\\sisdr{k}}}{{{si:.0f}}}")
     # seed replication (independent manifests), if the seed runs exist
     for i, seed in enumerate(("seed1", "seed2")):
         p = ROOT / "results" / f"e2_predictor_{seed}.json"

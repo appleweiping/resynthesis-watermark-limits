@@ -1,8 +1,9 @@
 """E1 — deployed-watermark survival across analysis-resynthesis channels.
 
 Protocol (the paper's operational experiment):
-  * Baselines (AudioSeal / WavMark / SilentCipher) are tuned to the SAME median
-    PESQ target before any attack (matched perceptual budget, not matched SNR).
+  * Baselines (AudioSeal / WavMark / SilentCipher) run at native strength (they
+    saturate above the PESQ target, so are transparent but NOT PESQ-equalized;
+    per-baseline clean-embed PESQ + SI-SDR are recorded in the results JSON).
   * Detector thresholds for TPR@1%FPR come ONLY from the clean calibration split
     (speaker-disjoint from test, >=`--n-calib` clips). The test split never
     touches threshold selection.
@@ -81,12 +82,14 @@ def main() -> None:
     print(f"[E1] test={len(test)} calib={len(calib)} attackers="
           f"{[a.name for a in attackers]} baselines={[b.name for b in baselines]}")
 
-    # ---- matched perceptual budget ----------------------------------------------
+    # ---- embed strength (native; schemes saturate above the PESQ target) --------
     strengths = {}
     for b in baselines:
         s = calibrate_strength_to_pesq(b, fit_sub, target=args.pesq_target)
         strengths[b.name] = s
-        print(f"[E1] {b.name}: strength={s:.3f} (median PESQ ~ {args.pesq_target})")
+        note = " (saturated at max; already transparent)" if s >= 0.999 else ""
+        print(f"[E1] {b.name}: embed strength={s:.3f}{note}; "
+              "clean-embed PESQ reported per-baseline in the results JSON")
 
     # ---- attack severity on clean audio (channel reference) ----------------------
     severity = {}

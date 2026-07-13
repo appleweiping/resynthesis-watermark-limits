@@ -78,10 +78,12 @@ Full statements and proofs: [`docs/THEORY.md`](docs/THEORY.md).
   intervals. An **attack-aware recalibration** row is reported as a labeled diagnostic.
 - **Cluster bootstrap**: AUC CIs resample utterances (paired pos/neg per cluster), never
   independent pos/neg shuffling.
-- **Matched perceptual budget**: every watermark (AudioSeal, WavMark, SilentCipher, and
-  our constructed marks) is tuned to the same median PESQ before attack — no
-  audible-vs-transparent comparisons. PESQ and SI-SDR are reported, along with each
-  attack's own PESQ on clean audio.
+- **Perceptual budget reported (not force-matched)**: the deployed baselines run at their
+  native full strength — all transparent but *not* PESQ-equalized (clean-embed PESQ
+  4.42 / 4.27 / 4.60, SI-SDR 26 / 37 / 34 dB for AudioSeal / WavMark / SilentCipher). We
+  do not force a common PESQ (which would push each scheme off its designed operating
+  point) and we disclose that AudioSeal carries the most energy, so its greater survival
+  is partly a strength effect. Constructed marks (E2) *are* PESQ-matched to 4.2.
 - **Speaker-stratified manifests** (seeded): ~1000 test clips from all 40 test-clean
   speakers (voice-active random segments, not file heads), multiple keys, 3 seeds.
 - **Fail-loudly**: formal runs abort if any attacker/baseline/model is missing — results
@@ -113,9 +115,10 @@ distinct modes:
 
 | Mode | What happens | Where |
 |---|---|---|
-| **Erasure** | separability collapses (oriented AUC → 0.50, TPR → 0), unrecoverable by recalibration | SilentCipher & WavMark under *all nine* lossy channels; AudioSeal under SNAC and self-VC (and weakly under mel-inversion, AUC 0.57, TPR 0.01) |
-| **Calibration failure** | separability *retained* (AUC 0.93 / 0.81) but the fixed threshold's achieved FPR explodes 0.01 → 0.73 / 0.80 as the codec pushes clean audio across the boundary | AudioSeal under EnCodec 6k / 3k |
-| **Graceful degradation** | AUC and calibration retained (AUC 0.93, FPR 0.01), recall reduced (TPR 0.64) | AudioSeal under DAC |
+| **Erasure** (separability + operating point both lost) | oriented AUC → 0.50 (CI covers 0.5), TPR → 0, unrecoverable | SilentCipher & WavMark under *all nine* lossy channels; AudioSeal under SNAC and self-VC |
+| **Operating-point loss** (weak separability retained) | AUC 0.54–0.63 (CI above 0.5) but TPR ≤ 0.07 | AudioSeal under mel-inversion, Vocos, Vocos-EnCodec |
+| **Calibration failure** (strong separability retained) | AUC 0.93 / 0.81 but achieved FPR explodes 0.01 → 0.73 / 0.80 as the codec pushes clean audio across the boundary | AudioSeal under EnCodec 6k / 3k |
+| **Graceful degradation** | AUC 0.93 + calibration retained (FPR 0.01), recall reduced (TPR 0.64) | AudioSeal under DAC |
 
 No score sign/order inversion occurred in the final protocol.
 
