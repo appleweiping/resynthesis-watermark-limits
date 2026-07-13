@@ -143,7 +143,8 @@ def macros(e1: dict, e2: dict, e3: dict) -> list[str]:
         # per-attacker isotonic R^2, median across attackers (snac noted in text)
         f"\\newcommand{{\\rTwoSens}}"
         f"{{{f2(float(np.median([v['isotonic']['r2'] for v in by_att.values()])))}}}",
-        f"\\newcommand{{\\permP}}{{{pm_m['p_value']:.3g}}}",
+        ("\\newcommand{\\permP}{<10^{-3}}" if pm_m['p_value'] <= 0.002
+         else f"\\newcommand{{\\permP}}{{{pm_m['p_value']:.3g}}}"),
         f"\\newcommand{{\\spearmanSensWave}}{{{f2(pm_w['observed_within_spearman'])}}}",
         f"\\newcommand{{\\spearmanMagFrac}}"
         f"{{{f2(e2['permutation_auc_mel']['pred_stft_mag_fraction']['observed_within_spearman'])}}}",
