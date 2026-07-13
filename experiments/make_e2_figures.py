@@ -68,20 +68,19 @@ def main() -> None:
     for a in np.unique(strata):
         idx = np.flatnonzero(strata == a)
         low[idx[s[idx] <= thr * np.median(s[idx])]] = True
-    data, labels = [], []
-    for resp, lab in [("auc_mel", "mel probe"), ("auc_wave", "wave probe")]:
+    data, labels, colors = [], [], []
+    for resp, lab in [("auc_mel", "mel"), ("auc_wave", "wav")]:
         y = np.abs(np.array([p[resp] for p in test]) - 0.5)
         if low.any():
-            data.append(y[low]); labels.append(f"near-null\n({lab})")
-        data.append(y[~low]); labels.append(f"rest\n({lab})")
-    bp = ax2.boxplot(data, tick_labels=labels, widths=0.55, showfliers=False,
+            data.append(y[low]); labels.append(f"null\n{lab}"); colors.append("#c6dbef")
+        data.append(y[~low]); labels.append(f"rest\n{lab}"); colors.append("#fdd0a2")
+    bp = ax2.boxplot(data, tick_labels=labels, widths=0.6, showfliers=False,
                      patch_artist=True)
-    for patch, lab in zip(bp["boxes"], labels):
-        patch.set_facecolor("#c6dbef" if "near-null" in lab else "#fdd0a2")
-        patch.set_alpha(0.9)
+    for patch, col in zip(bp["boxes"], colors):
+        patch.set_facecolor(col); patch.set_alpha(0.9)
     ax2.set_ylabel(r"$|\mathrm{AUC}-0.5|$")
-    ax2.tick_params(axis="x", labelsize=6.5)
-    ax2.set_title("(b) near-null $s_\\mathcal{W}$ stays at chance", fontsize=8)
+    ax2.tick_params(axis="x", labelsize=7)
+    ax2.set_title("(b) near-null $s_\\mathcal{W}$: chance", fontsize=8)
 
     fig.tight_layout()
     fig.savefig(FIG / "fig_e2_predictor.pdf")
