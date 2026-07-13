@@ -1,13 +1,22 @@
-% AUTO-GENERATED: raw AUC / oriented AUC / TPR@1%FPR (calib.-fixed threshold)
-\begin{table*}[t]\centering
-\caption{Deployed watermarks under analysis--resynthesis at matched median PESQ. Cells: oriented AUC\,/\,TPR\,/\,\emph{achieved} FPR at the 1\%-FPR threshold fixed on the independent calibration split ($n=7157$ clean negatives). Two failure modes appear: \emph{erasure} (AUC$\to$0.5, TPR$\to$0) and \emph{calibration failure} (separability retained but the fixed threshold's false-alarm rate explodes on attacked clean audio).}
-\label{tab:e1}\footnotesize\setlength{\tabcolsep}{3.2pt}
-\begin{tabular}{lccccccccccc}
+% AUTO-GENERATED: oriented AUC / TPR / achieved FPR per (attacker, baseline)
+\begin{table}[t]\centering
+\caption{Deployed watermarks under analysis--resynthesis at matched median PESQ. Cells: oriented AUC\,/\,TPR\,/\,\emph{achieved} FPR at the 1\%-FPR threshold fixed on the independent calibration split ($n=7157$ clean negatives). Failure is \emph{erasure} (AUC$\to$0.5, TPR$\to$0) or \emph{calibration failure} (separability retained, false-alarm rate explodes on attacked clean audio).}
+\label{tab:e1}\scriptsize\setlength{\tabcolsep}{2.6pt}
+\begin{tabular}{lcc}
 \toprule
-Baseline & clean & STFT$^\dagger$ & mel-inv & Vocos & Vc-EnC & EnC6 & EnC3 & DAC & SNAC & VC$_4$ & VC$_8$ \\
+Channel & AudioSeal & SilentCipher \\
 \midrule
-AudioSeal & 1.00/1.00/0.01 & 0.99/0.90/0.00 & 0.57/0.01/0.00 & 0.63/0.07/0.01 & 0.52/0.01/0.00 & 0.93/0.99/0.73 & 0.81/0.97/0.80 & 0.93/0.64/0.01 & 0.50/0.00/0.00 & 0.51/0.01/0.01 & 0.51/0.02/0.02 \\
-SilentCipher & 0.99/0.98/0.00 & 0.95/0.90/0.00 & 0.50/0.00/0.01 & 0.50/0.01/0.00 & 0.50/0.01/0.00 & 0.50/0.00/0.00 & 0.50/0.00/0.01 & 0.50/0.01/0.01 & 0.50/0.00/0.01 & 0.50/0.00/0.01 & 0.50/0.01/0.01 \\
+clean & 1.00/1.00/0.01 & 0.99/0.98/0.00 \\
+STFT$^\dagger$ & 0.99/0.90/0.00 & 0.95/0.90/0.00 \\
+mel-inv & 0.57/0.01/0.00 & 0.50/0.00/0.01 \\
+Vocos & 0.63/0.07/0.01 & 0.50/0.01/0.00 \\
+Vc-EnC & 0.52/0.01/0.00 & 0.50/0.01/0.00 \\
+EnC6 & 0.93/0.99/0.73 & 0.50/0.00/0.00 \\
+EnC3 & 0.81/0.97/0.80 & 0.50/0.00/0.01 \\
+DAC & 0.93/0.64/0.01 & 0.50/0.01/0.01 \\
+SNAC & 0.50/0.00/0.00 & 0.50/0.00/0.01 \\
+VC$_4$ & 0.51/0.01/0.01 & 0.50/0.00/0.01 \\
+VC$_8$ & 0.51/0.02/0.02 & 0.50/0.01/0.01 \\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}

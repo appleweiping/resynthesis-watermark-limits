@@ -212,7 +212,7 @@ def e1_table(e1: dict) -> list[str]:
         "\\caption{Deployed watermarks under analysis--resynthesis at matched median "
         "PESQ. Cells: oriented AUC\\,/\\,TPR\\,/\\,\\emph{achieved} FPR at the 1\\%-FPR "
         "threshold fixed on the independent calibration split "
-        f"($n={e1['n_calib']}$ clean negatives). Failure is \\emph{erasure} "
+        f"($n={e1['n_calib']}$ clean negatives). Failure is \\emph{{erasure}} "
         "(AUC$\\to$0.5, TPR$\\to$0) or \\emph{calibration failure} (separability "
         "retained, false-alarm rate explodes on attacked clean audio).}",
         "\\label{tab:e1}\\scriptsize\\setlength{\\tabcolsep}{2.6pt}",
