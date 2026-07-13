@@ -108,10 +108,10 @@ Full statements and proofs: [`docs/THEORY.md`](docs/THEORY.md).
 
 ## Results (headline)
 
-**E1 — deployed watermarks (N=1000 clips, matched median PESQ ≈ 4.2–4.6).** All three
-baselines are perfect on the near-lossless STFT-GL control (AUC ≈ 1.0, TPR ≈ 0.9–1.0) and
-lose their calibrated operating point under nearly all **nine lossy channels**, in three
-distinct modes:
+**E1 — deployed watermarks (N=1000 clips, each at native transparent strength, PESQ
+4.42/4.27/4.60).** All three baselines are perfect on the near-lossless STFT-GL control
+(AUC ≈ 1.0, TPR ≈ 0.9–1.0) and lose their calibrated operating point under nearly all
+**nine lossy channels**, in four distinct outcomes:
 
 | Mode | What happens | Where |
 |---|---|---|
