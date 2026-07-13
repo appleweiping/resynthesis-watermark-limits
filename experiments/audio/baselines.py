@@ -4,9 +4,13 @@ Each baseline exposes:
   * ``embed(wav, key)``   -> watermarked wav (np.float32, same length)
   * ``score(wav, key)``   -> host-blind detector score (higher = "watermarked");
                              the score direction is FIXED once (raw orientation)
-  * ``strength``          -> scalar in (0, 1]; watermark residual is post-scaled by
-                             it so every method can be tuned to the SAME perceptual
-                             target (matched PESQ), not matched SNR.
+  * ``strength``          -> scalar in (0, 1]; the watermark residual is post-scaled by
+                             it. NOTE: all three deployed schemes are already more
+                             transparent than the PESQ target at strength 1.0, so
+                             calibrate_strength_to_pesq saturates them at 1.0 — they run
+                             at NATIVE strength and are NOT PESQ-equalized (per-baseline
+                             PESQ/SI-SDR are recorded in the results; the strength/energy
+                             confound is disclosed in the paper).
 
 Scores are continuous so AUC/thresholds are meaningful:
   * AudioSeal     — detector watermark probability

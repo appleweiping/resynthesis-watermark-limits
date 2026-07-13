@@ -168,7 +168,8 @@ def scale_to_pesq(
     """Bisection on the embedding gain so PESQ-WB(x, x+delta) hits `target` +- `tol`.
 
     Returns (delta, achieved_pesq, snr_db). All marks calibrated this way share the
-    same perceptual budget — the paper's fairness condition (matched PESQ, not SNR).
+    same perceptual budget across CONSTRUCTED marks (PESQ-matched, not SNR-matched); the
+    # deployed baselines saturate above this target and run at native strength.
     """
     from pesq import pesq as pesq_fn
 
