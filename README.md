@@ -88,8 +88,8 @@ Full statements and proofs: [`docs/THEORY.md`](docs/THEORY.md).
   never silently drop a channel.
 - **Constructed marks are verified, not assumed**: the kernel-direction construction
   (alternating projections onto quadrature ∩ consistent spectrograms) reports its
-  measured analysis-change ratio vs a random control (first-order leakage ≈ 0.06×,
-  second-order floor ≈ 0.16× at operating amplitude — real numbers from the run).
+  measured analysis-change ratio vs a random control (≈ 0.16× at operating amplitude for
+  the kernel mark vs ≈ 2.3× for the row mark — real numbers from the run).
 - The genie-aided matched-filter probe used in the geometry experiment is a
   **diagnostic**, clearly labeled; deployed-detector conclusions come only from the real
   baselines' own detectors.
@@ -101,22 +101,23 @@ Full statements and proofs: [`docs/THEORY.md`](docs/THEORY.md).
 | STFT-GL (near-lossless control) | AudioSeal (16-bit, prob. detector) |
 | mel-GL — inversion of THE unified 80-mel analysis | WavMark (16-bit payload matcher) |
 | Vocos (neural vocoder), Vocos-EnCodec (codec-token reconstruction) | SilentCipher (44.1k path; the released 16k model is unreachable through the package's byte API — documented) |
-| EnCodec 6/3/1.5 kbps, DAC 16k, SNAC 24k | + constructed kernel/row marks (geometry probes) |
+| EnCodec 6/3 kbps, DAC 16k, SNAC 24k | + constructed kernel/row marks (geometry probes) |
 | kNN-VC self voice-conversion, top-k ∈ {4, 8} | |
 
 ## Results (headline)
 
-**E1 — deployed watermarks (N=1000 clips, matched median PESQ ≈ 4.2–4.6).** Every
-baseline loses its calibrated operating point under **every** lossy channel, in two
-sharply different modes:
+**E1 — deployed watermarks (N=1000 clips, matched median PESQ ≈ 4.2–4.6).** All three
+baselines are perfect on the near-lossless STFT-GL control (AUC ≈ 1.0, TPR ≈ 0.9–1.0) and
+lose their calibrated operating point under nearly all **nine lossy channels**, in three
+distinct modes:
 
 | Mode | What happens | Where |
 |---|---|---|
-| **Erasure** | separability collapses (oriented AUC → 0.50, TPR → 0), unrecoverable by recalibration | SilentCipher & WavMark under *all* channels; AudioSeal under mel-inversion, Vocos-EnCodec, SNAC, self-VC |
-| **Calibration failure** | separability *retained* (AUC ≈ 0.93) but the fixed threshold's achieved FPR explodes 0.01 → 0.80–0.87 as the codec pushes clean audio across the boundary | AudioSeal under the EnCodec family |
+| **Erasure** | separability collapses (oriented AUC → 0.50, TPR → 0), unrecoverable by recalibration | SilentCipher & WavMark under *all nine* lossy channels; AudioSeal under SNAC and self-VC (and weakly under mel-inversion, AUC 0.57, TPR 0.01) |
+| **Calibration failure** | separability *retained* (AUC 0.93 / 0.81) but the fixed threshold's achieved FPR explodes 0.01 → 0.73 / 0.80 as the codec pushes clean audio across the boundary | AudioSeal under EnCodec 6k / 3k |
+| **Graceful degradation** | AUC and calibration retained (AUC 0.93, FPR 0.01), recall reduced (TPR 0.64) | AudioSeal under DAC |
 
-The near-lossless STFT-GL control preserves all three (AUC ≈ 1.0, TPR ≈ 0.9–1.0),
-confirming the pipeline. No score sign/order inversion occurred in the final protocol.
+No score sign/order inversion occurred in the final protocol.
 
 **E2 — predictor validation (held-out).** Channel-relative sensitivity `s_W` predicts
 mel-domain detectability **within every attacker** (per-attacker Spearman 0.48–0.80;

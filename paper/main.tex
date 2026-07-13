@@ -63,14 +63,15 @@ $\tfrac18\norm{P\delta}^2$; a Gaussian \emph{achievable lower bound} $\Rlb$ (not
 capacity) covers blind embedders. The model's empirical content is a measurable,
 channel-relative \emph{survival predictor}: each attacker's own analysis sensitivity.
 On LibriSpeech ($\nTest$ speaker-disjoint test clips, thresholds from $\nCalib$ independent
-calibration clips), across spectral inversion, two neural vocoder pipelines, three neural
-codecs, and self voice-conversion, the predictor tracks held-out post-attack separability
-within every attacker (pooled Spearman $\spearmanSens$, perm.\ $p\permP$), while SNR and
+calibration clips), across five resynthesis families (spectral inversion, a neural vocoder,
+and three neural codecs), the predictor tracks held-out post-attack separability within
+every attacker (pooled Spearman $\spearmanSens$, perm.\ $p\permP$), while SNR and
 spectral-centroid controls fail. Deployed watermarks (AudioSeal, WavMark, SilentCipher) at
-matched perceptual quality lose their calibrated operating point under \emph{every} lossy
-channel, in two distinct modes we keep separate: \emph{erasure} (separability itself
-collapses) and \emph{calibration failure} (separability remains but the fixed threshold's
-false-alarm rate explodes on attacked clean audio).
+matched perceptual quality lose their calibrated operating point under nearly every lossy
+channel, in modes we keep separate: \emph{erasure} (separability itself collapses),
+\emph{calibration failure} (separability remains but the fixed threshold's false-alarm rate
+explodes on attacked clean audio), and \emph{graceful degradation} (recall falls but
+detection still works).
 \end{abstract}
 
 \begin{keywords}
@@ -109,7 +110,7 @@ with exponent $\tfrac18\norm{P\delta}^2$ (\S\ref{sec:lg}).
 \emph{not} a watermarking capacity: informed embedding~\cite{costa1983writing,
 moulin2003information} can exceed it and no rate converse is claimed (\S\ref{sec:lg}).
 (iv)~A channel-relative survival predictor --- each attacker's own analysis
-sensitivity --- validated on \emph{held-out, speaker-disjoint} data across seven
+sensitivity --- validated on \emph{held-out, speaker-disjoint} data across five
 resynthesis families against competing predictors, with permutation controls
 (\S\ref{sec:exp}).
 (v)~A calibrated operational evaluation of deployed watermarks at matched perceptual
@@ -210,24 +211,24 @@ single mel fraction is never reused across attackers with different $\A_\W$.
 \IfFileExists{tab_e1.tex}{\input{tab_e1}}{}
 \noindent\textbf{Setup.} LibriSpeech 16\,kHz: test $=$ \nTest{} speaker-stratified
 4\,s voice-active clips from test-clean (\nSpeakersTest{} speakers); detector thresholds
-come \emph{only} from \nCalib{} independent calibration clips from dev-clean
-(speaker-disjoint from test by partition); the predictor's mapping is fit on a dev-clean
-fit split and evaluated on test-clean only. Attackers: STFT-GL (near-lossless control),
-mel-GL (spectral inversion of THE unified 80-mel analysis), Vocos (neural vocoder),
-Vocos-EnCodec (learned reconstruction from codec tokens), EnCodec at $6/3/1.5$\,kbps,
-DAC, SNAC, and kNN-VC self voice-conversion (top-$k\in\{4,8\}$) --- content-, speaker-
-and prosody-preserving re-synthesis. All formal runs fail loudly if any attacker or
-baseline is missing. Scores, seeds, keys, manifests, and locked environments ship with
-the repository.
+come \emph{only} from \nCalib{} independent calibration clips (dev-clean, dev-other, and
+test-other, all speaker-disjoint from the test-clean evaluation set); the predictor's
+mapping is fit on a dev-clean fit split and evaluated on test-clean only. Ten attackers:
+STFT-GL (near-lossless control), mel-GL (spectral inversion of THE unified 80-mel
+analysis), Vocos (neural vocoder), Vocos-EnCodec (learned reconstruction from codec
+tokens), EnCodec at $6/3$\,kbps, DAC, SNAC, and kNN-VC self voice-conversion
+(top-$k\in\{4,8\}$) --- content-, speaker- and prosody-preserving re-synthesis. The
+\emph{predictor} study (E2) uses the five with a common analysis representation (mel-GL,
+Vocos, EnCodec, DAC, SNAC). All formal runs fail loudly if any attacker or baseline is
+missing. Scores, seeds, keys, manifests, and locked environments ship with the repository.
 
 \noindent\textbf{Constructed marks (geometry probes).} W.r.t.\ the unified mel analysis
 $\A$ we construct, per utterance and key: a \emph{kernel mark} (alternating projections
 onto quadrature $\cap$ consistent spectrograms --- the first-order kernel of magnitude
 analysis) and a \emph{row mark} (in-phase mel-pattern shifts). Construction quality is
-\emph{measured}, not assumed: at infinitesimal amplitude the kernel mark's analysis
-change is $\nullLeakEps\times$ a random direction's; at the operating amplitude the
-(second-order) leakage is $\nullLeakOp\times$ random, and the row mark's is
-$\rowLeakOp\times$. Their detection uses a genie-aided matched-filter \emph{probe}
+\emph{measured}, not assumed: at the operating amplitude the kernel mark's analysis
+change is only $\nullLeakOp\times$ that of a random direction of equal norm (residual
+second-order leakage), whereas the row mark's is $\rowLeakOp\times$. Their detection uses a genie-aided matched-filter \emph{probe}
 (the known per-utterance perturbation) --- a diagnostic of channel geometry, explicitly
 not a deployable detector; deployed-detector conclusions come only from the baselines.
 
@@ -270,17 +271,20 @@ before attack --- no audible-vs-transparent comparisons. Per (baseline, attacker
 we report oriented AUC (utterance-clustered bootstrap CIs) and the calibrated operating
 point --- TPR \emph{and achieved FPR} at the 1\%-FPR threshold fixed on \nCalib{}
 independent clean negatives (Clopper--Pearson intervals) --- plus an attack-aware
-recalibration diagnostic (Table~\ref{tab:e1}). Every baseline loses its operating point
-under every lossy channel, in two sharply different modes. \emph{Erasure}: SilentCipher
-and WavMark collapse to chance under all ten channels (AUC $0.99\!\to\!0.50$, TPR
-$\to\!0.00$, nothing recoverable by recalibration); AudioSeal is erased by
-spectral inversion, SNAC, and self-VC. \emph{Calibration failure}: under the EnCodec
-family AudioSeal \emph{retains} separability (AUC $0.93$) yet the fixed threshold's
-false-alarm rate explodes ($0.01\!\to\!0.80$--$0.87$): the codec round-trip pushes
-\emph{clean} audio across the detection boundary. Survival is channel-specific in
-exactly the way the subspace picture suggests --- what a scheme's detector reads,
-relative to what each channel preserves and how the channel moves clean signals ---
-and no sign/order inversion of scores occurred anywhere in the final protocol.
+recalibration diagnostic (Table~\ref{tab:e1}). All three baselines are perfect on the
+near-lossless STFT control and lose their operating point under nearly all nine lossy
+channels, in three distinct modes. \emph{Erasure} (separability collapses): SilentCipher
+and WavMark under all nine lossy channels (AUC $0.99\!\to\!0.50$, TPR $\to\!0.00$,
+nothing recoverable by recalibration); AudioSeal under SNAC and self-VC, and to a weaker
+degree under mel-inversion (AUC $0.57$, operationally dead at TPR $0.01$).
+\emph{Calibration failure} (separability retained, calibration breaks): under EnCodec
+AudioSeal keeps AUC $0.93/0.81$ yet the fixed threshold's false-alarm rate explodes
+($0.01\!\to\!0.73/0.80$) as the codec round-trip pushes \emph{clean} audio across the
+boundary. \emph{Graceful degradation}: AudioSeal survives DAC with a still-calibrated
+detector (AUC $0.93$, FPR $0.01$) at reduced recall (TPR $0.64$). Survival is
+channel-specific in exactly the way the subspace picture suggests --- what a scheme's
+detector reads, relative to what each channel preserves and how it moves clean signals
+--- and no sign/order inversion of scores occurred anywhere in the final protocol.
 
 \noindent\textbf{E3 --- multi-bit proof of concept (no rate claim).}
 An $8$-bit payload in the unified mel domain (frame-differential BPSK, fully

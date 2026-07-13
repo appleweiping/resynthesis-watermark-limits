@@ -165,7 +165,6 @@ def macros(e1: dict, e2: dict, e3: dict) -> list[str]:
         f"{{{f2(e2['by_attacker_auc_wave']['snac']['phi_fit']['spearman'])}}}",
         f"\\newcommand{{\\nullLeakOp}}{{{f2(float(np.median(null_rel)))}}}",
         f"\\newcommand{{\\rowLeakOp}}{{{f2(float(np.median(row_rel)))}}}",
-        f"\\newcommand{{\\nullLeakEps}}{{{f2(e2.get('null_leak_eps', 0.06))}}}",
         f"\\newcommand{{\\pocBits}}{{{e3['bits']}}}",
         f"\\newcommand{{\\pocPesq}}{{{f2(e3['pesq_median'])}}}",
     ]
@@ -213,9 +212,10 @@ def e1_table(e1: dict) -> list[str]:
         "\\caption{Deployed watermarks under analysis--resynthesis at matched median "
         "PESQ. Cells: oriented AUC\\,/\\,TPR\\,/\\,\\emph{achieved} FPR at the 1\\%-FPR "
         "threshold fixed on the independent calibration split "
-        f"($n={e1['n_calib']}$ clean negatives). Failure is \\emph{{erasure}} "
-        "(AUC$\\to$0.5, TPR$\\to$0) or \\emph{calibration failure} (separability "
-        "retained, false-alarm rate explodes on attacked clean audio).}",
+        f"($n={e1['n_calib']}$ clean negatives). Outcomes: \\emph{{erasure}} "
+        "(AUC$\\to$0.5, TPR$\\to$0); \\emph{calibration failure} (AUC retained, "
+        "achieved FPR explodes on attacked clean audio); \\emph{graceful degradation} "
+        "(AUC and FPR retained, TPR reduced --- AudioSeal/DAC).}",
         "\\label{tab:e1}\\scriptsize\\setlength{\\tabcolsep}{2.6pt}",
         "\\begin{tabular}{l" + "c" * len(bls) + "}",
         "\\toprule",
