@@ -1,7 +1,16 @@
 # Acceptance gate (from the external review) — item-by-item evidence
 
-Status legend: ✅ done · 🔶 in progress · ❌ not done. This file is updated as the
+Status legend: ✅ done · 🔶 partial/disclosed · ❌ not done. This file is updated as the
 final runs land; nothing is marked done without pointing at code/results.
+
+**Adversarial-polish convergence.** After the P0/P1 rework, the paper + code were run
+through repeated multi-agent adversarial reviews (4 lenses + adversarial verification
+each). Confirmed-major count per round: **13 → 2 → 1 → 1 → 1 → 2 → 2 → 0 → 0**. Two
+consecutive clean rounds (rounds 8–9) establish convergence; every finding produced a
+genuine honesty improvement (e.g. dropping a non-robust waveform sign-reversal, relabeling
+a degenerate constant-score detector, switching separability claims to raw two-sided CIs,
+scoping the predictor to within-attacker ordinal ranking). The paper spine (Prop 1 /
+Thm 1 / R_LB / E1 taxonomy / E2 mel-domain predictor / E3) was unaffected throughout.
 
 | # | Gate item | Status | Evidence |
 |---|---|---|---|
