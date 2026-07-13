@@ -205,26 +205,27 @@ def e1_table(e1: dict) -> list[str]:
         return f"{orn:.2f}/{tpr:.2f}/{fpr:.2f}"
 
     bls = sorted({r["baseline"] for r in rows}, key=lambda b: list(BL_LABEL).index(b))
+    # TRANSPOSED: attackers as rows, baselines as columns (fits one column width)
     lines = [
-        "% AUTO-GENERATED: raw AUC / oriented AUC / TPR@1%FPR (calib.-fixed threshold)",
-        "\\begin{table*}[t]\\centering",
+        "% AUTO-GENERATED: oriented AUC / TPR / achieved FPR per (attacker, baseline)",
+        "\\begin{table}[t]\\centering",
         "\\caption{Deployed watermarks under analysis--resynthesis at matched median "
         "PESQ. Cells: oriented AUC\\,/\\,TPR\\,/\\,\\emph{achieved} FPR at the 1\\%-FPR "
         "threshold fixed on the independent calibration split "
-        f"($n={e1['n_calib']}$ clean negatives). Two failure modes appear: "
-        "\\emph{erasure} (AUC$\\to$0.5, TPR$\\to$0) and \\emph{calibration failure} "
-        "(separability retained but the fixed threshold's false-alarm rate explodes on "
-        "attacked clean audio).}",
-        "\\label{tab:e1}\\footnotesize\\setlength{\\tabcolsep}{3.2pt}",
-        "\\begin{tabular}{l" + "c" * (len(atts) + 1) + "}",
+        f"($n={e1['n_calib']}$ clean negatives). Failure is \\emph{erasure} "
+        "(AUC$\\to$0.5, TPR$\\to$0) or \\emph{calibration failure} (separability "
+        "retained, false-alarm rate explodes on attacked clean audio).}",
+        "\\label{tab:e1}\\scriptsize\\setlength{\\tabcolsep}{2.6pt}",
+        "\\begin{tabular}{l" + "c" * len(bls) + "}",
         "\\toprule",
-        "Baseline & clean & " + " & ".join(ATT_LABEL[a] for a in atts) + " \\\\",
+        "Channel & " + " & ".join(BL_LABEL[b] for b in bls) + " \\\\",
         "\\midrule",
+        "clean & " + " & ".join(cell(b, "none") for b in bls) + " \\\\",
     ]
-    for bl in bls:
-        cells = [cell(bl, "none")] + [cell(bl, a) for a in atts]
-        lines.append(f"{BL_LABEL[bl]} & " + " & ".join(cells) + " \\\\")
-    lines += ["\\bottomrule", "\\end{tabular}", "\\end{table*}"]
+    for a in atts:
+        lines.append(f"{ATT_LABEL[a]} & " +
+                     " & ".join(cell(b, a) for b in bls) + " \\\\")
+    lines += ["\\bottomrule", "\\end{tabular}", "\\end{table}"]
     return lines
 
 

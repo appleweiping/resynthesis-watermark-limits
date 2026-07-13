@@ -9,7 +9,8 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{remark}{Remark}
 
-\emergencystretch=1em
+\emergencystretch=2em
+\hyphenation{re-syn-the-sis wa-ter-mark-ing}
 \DeclareMathOperator{\rank}{rank}
 \DeclareMathOperator{\tr}{tr}
 \newcommand{\R}{\mathbb{R}}
@@ -133,7 +134,9 @@ The attacker knows neither $\kappa$ nor the scheme (adaptive, key-aware removal
 
 \begin{proposition}[general channels]\label{prop:general}
 For any channel $\W$,
-$C(\W_\#P_0,\W_\#P_1)\le C(P_0,P_1)$.
+\begin{equation*}
+C(\W_\#P_0,\W_\#P_1)\;\le\;C(P_0,P_1).
+\end{equation*}
 If moreover $\A(E_\kappa(x))=\A(x)$ holds $P_0$-a.s.\ and $\mathcal S$ depends on its
 input only through $z$, then $\W_\#P_1=\W_\#P_0$; hence
 $C(\W_\#P_0,\W_\#P_1)=0$ and no detector beats chance at any sample size.
