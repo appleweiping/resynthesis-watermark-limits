@@ -43,10 +43,19 @@ def main() -> None:
     for s in seeds:
         run([py, "scripts/make_manifest.py", "--root", args.root, "--seed", s,
              "--out", f"data/manifest_seed{s}.json"])
+    # calibration-only manifests (speaker-disjoint from test-clean) so the E1
+    # calibration pool clears the >=5000-negative spec in a single pass
+    extra = []
+    for part in ("dev-other", "test-other"):
+        out = f"data/manifest_calib_{part}.json"
+        run([py, "scripts/make_manifest.py", "--root", args.root, "--seed", "0",
+             "--calib-extra-from", part, "--n-calib", "4000", "--out", out])
+        extra.append(out)
 
     m0 = f"data/manifest_seed{seeds[0]}.json"
     run([py, "-m", "experiments.audio.e1_survival", "--manifest", m0,
-         "--device", args.device, "--n-test", str(args.n_test), "--strict"])
+         "--device", args.device, "--n-test", str(args.n_test),
+         "--extra-calib", ",".join(extra), "--strict"])
     run([py, "-m", "experiments.audio.e2_predictor", "--manifest", m0,
          "--device", args.device, "--strict"])
     run([py, "-m", "experiments.audio.e3_payload_poc", "--manifest", m0,

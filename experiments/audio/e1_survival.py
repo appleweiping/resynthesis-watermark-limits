@@ -50,6 +50,10 @@ def main() -> None:
     ap.add_argument("--test-start", type=int, default=0,
                     help="offset into the test split (for sharding slow baselines)")
     ap.add_argument("--n-calib", type=int, default=5000)
+    ap.add_argument("--extra-calib", default="",
+                    help="comma-separated calibration-only manifests (e.g. dev-other/"
+                         "test-other) appended to the calibration pool to reach the "
+                         ">=5000 spec in a single pass")
     ap.add_argument("--n-calib-attacked", type=int, default=1000,
                     help="attacked-calibration subset (recalibration diagnostic)")
     ap.add_argument("--keys", type=int, default=2, help="independent keys per clip")
@@ -69,6 +73,10 @@ def main() -> None:
     test = [(clip_uid(r), x) for _, r, x in
             iter_split(man, "test", args.test_start + args.n_test)][args.test_start:]
     calib = [x for _, _, x in iter_split(man, "calibration", args.n_calib)]
+    for extra in filter(None, args.extra_calib.split(",")):
+        em = load_manifest(ROOT / extra) if not Path(extra).is_absolute() \
+            else load_manifest(extra)
+        calib.extend(x for _, _, x in iter_split(em, "calibration", None))
     fit_sub = [x for _, _, x in iter_split(man, "fit", 24)]
     print(f"[E1] test={len(test)} calib={len(calib)} attackers="
           f"{[a.name for a in attackers]} baselines={[b.name for b in baselines]}")
