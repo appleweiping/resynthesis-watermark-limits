@@ -69,11 +69,10 @@ capacity) covers blind embedders. The model's empirical content is a measurable
 sensitivity, or a static magnitude-change fraction. On LibriSpeech ($\nTest$
 speaker-disjoint test clips, thresholds from $\nCalib$ independent calibration clips),
 across five resynthesis families (spectral inversion, a neural vocoder, and three neural
-codecs), these predict held-out post-attack separability \emph{for a fixed mel-reading
-detector} within every attacker (pooled Spearman $\spearmanSens$, perm.\ $p\permP$),
-while SNR and spectral-centroid controls fail --- survival is a property of the (channel,
-detector-domain) pair: for a waveform-correlation detector two of the three codecs
-(EnCodec, SNAC) reverse the sign. Deployed watermarks (AudioSeal, WavMark, SilentCipher),
+codecs), these predict held-out mel-domain detectability of constructed geometry-probe
+marks within every attacker (pooled Spearman $\spearmanSens$ unpaired / $\spearmanSensPaired$
+paired, both perm.\ $p\permP$; replicated across seeds), while SNR and spectral-centroid
+controls fail. Deployed watermarks (AudioSeal, WavMark, SilentCipher),
 each at its native transparent strength, lose their calibrated operating point under
 nearly every lossy channel, in modes we keep separate: \emph{erasure} (separability itself
 collapses), \emph{calibration failure} (separability remains but the fixed threshold's
@@ -121,10 +120,9 @@ with exponent $\tfrac18\norm{P\delta}^2$ (\S\ref{sec:lg}).
 moulin2003information} can exceed it and no rate converse is claimed (\S\ref{sec:lg}).
 (iv)~The finding that \emph{geometric} quantities --- each attacker's own analysis
 sensitivity $s_\W$, or a static magnitude-change fraction --- predict \emph{mel-domain}
-post-attack detectability on \emph{held-out, speaker-disjoint} data across five
-resynthesis families (while budget/centroid controls do not), with the sign reversing for
-EnCodec/SNAC in the waveform-detector domain --- prediction is detector-domain-specific
-(\S\ref{sec:exp}).
+post-attack separability of constructed marks on \emph{held-out, speaker-disjoint} data
+across five resynthesis families (while budget/centroid controls do not), robust under
+both paired and unpaired detectability statistics and across seeds (\S\ref{sec:exp}).
 (v)~A calibrated operational evaluation of deployed watermarks, separating loss of
 \emph{separability} (oriented AUC) from loss of the \emph{calibrated operating point}
 (TPR and \emph{achieved} FPR at a threshold fixed on an independent calibration set) ---
@@ -251,22 +249,25 @@ budgets, we measure $s_\W$ \eqref{eq:sens} per attacker and post-attack detectab
 correlation and a fixed mel-reading matched filter. Mappings are fit on dev-clean and
 evaluated on test-clean only; all statistics are within-attacker (rank-pooled), so
 between-attacker level differences can neither create nor mask an association.
-Results (Fig.~\ref{fig:e2}): $s_\W$ predicts mel-domain detectability \emph{within
-every attacker} (per-attacker Spearman $\rhoMelmelgl/\rhoMelvocos/\rhoMelencodec/
-\rhoMeldac/\rhoMelsnac$; pooled $\spearmanSens$, permutation $p\permP$), as does the
-static magnitude-change fraction ($\spearmanMagFrac$) --- both \emph{geometric}
-quantities --- while budget (SNR, $\spearmanSNR$) and spectral centroid
-($\spearmanCentroid$) do not. Empirically, the near-null regime behaves as the
+Results (Fig.~\ref{fig:e2}): for a fixed mel-reading matched filter, $s_\W$ predicts
+detectability \emph{within every attacker} (per-attacker Spearman $\rhoMelmelgl/
+\rhoMelvocos/\rhoMelencodec/\rhoMeldac/\rhoMelsnac$; pooled $\spearmanSens$, permutation
+$p\permP$), as does the static magnitude-change fraction ($\spearmanMagFrac$) --- both
+\emph{geometric} quantities --- while budget (SNR, $\spearmanSNR$) and spectral centroid
+($\spearmanCentroid$) do not. This holds under both the unpaired detectability response
+above and a stricter \emph{paired}, per-utterance transmission statistic
+($s_\W$ pooled $\spearmanSensPaired$, $p\permP$; seeds replicate), so it is not an
+artifact of host variability. Empirically, the near-null regime behaves as the
 exact-erasure condition (Prop.~\ref{prop:general}) would suggest: the $\necNLow$
 directions with $s_\W\!\le\!0.25\times$ median (they exist only for the mel-analysis
 channels --- the codecs' kernels are too small to reach) deviate from chance by median
-$\necLowMel$, \emph{maximum} $\necMaxLowMel$, versus $\necRestMel$ for the rest --- an
-observed monotonicity of the predictor, not a proof that Prop.~\ref{prop:general} holds
-for these nonlinear channels. In the \emph{waveform} domain, two of the three codecs
-show the \emph{opposite} dependence ($\rho_s=\rhoWaveEncodec$ EnCodec, $\rhoWaveSnac$
-SNAC): they transmit precisely the sub-mel detail that mel analysis discards. (DAC keeps
-the mel-domain sign, $\rho_s=\rhoWaveDac$, and mel-GL/Vocos go to chance.) Survival is
-thus a property of the (channel, detector-domain) pair, not of the watermark alone.
+$\necLowMel$, \emph{maximum} $\necMaxLowMel$ --- an observed monotonicity, not a proof
+that Prop.~\ref{prop:general} holds for these nonlinear channels. A \emph{waveform}-domain
+detector shows a weaker, opposite-signed unpaired trend for EnCodec/SNAC
+($\rho_s=\rhoWaveEncodec/\rhoWaveSnac$), consistent with waveform codecs carrying sub-mel
+detail; but this does \emph{not} survive the paired transmission statistic
+($\rhoWavePairedEnc/\rhoWavePairedSnac$) or replicate across seeds, so we report it as an
+observation and do \emph{not} claim a robust detector-domain sign reversal.
 
 \begin{figure}[t]
   \centering
@@ -291,9 +292,12 @@ independent clean negatives (Clopper--Pearson intervals) --- plus an attack-awar
 recalibration diagnostic (Table~\ref{tab:e1}). We keep two questions separate: does
 \emph{separability} survive (oriented AUC, CI vs.\ $0.5$) and does the \emph{calibrated
 operating point} survive (TPR at the fixed-threshold's achieved FPR)? All three baselines
-are perfect on the near-lossless STFT control. SilentCipher and WavMark lose \emph{both}
-under all nine lossy channels (\emph{erasure}: AUC $0.99\!\to\!0.50$, TPR $\to\!0.00$,
-unrecoverable). AudioSeal is more varied: separability is \emph{erased} only by SNAC and
+are perfect on the near-lossless STFT control. SilentCipher's \emph{continuous} detector
+falls to chance (oriented AUC $\to\!0.50$ with proper CIs, TPR $\to\!0.00$) under all nine
+lossy channels --- a measured separability collapse; WavMark's payload decoder
+desynchronizes to a constant score under every lossy channel, so its exact $0.50$
+(zero-width CI) is a deployed-decoder \emph{sync failure}, consistent with (but not itself
+a measurement of) that collapse. AudioSeal is more varied: separability is \emph{erased} only by SNAC and
 self-VC (AUC $\to\!0.50$--$0.51$, CI covers $0.5$); under mel-inversion, Vocos and
 Vocos-EnCodec it retains \emph{weak} separability (AUC $0.54$--$0.63$, CIs above $0.5$)
 but the operating point is dead (TPR $\le0.07$); under EnCodec it keeps \emph{strong}
@@ -347,10 +351,10 @@ raw sub-$0.5$ AUC read as erasure.
 A restricted but precise subspace model of analysis--resynthesis explains, with
 correctly-scoped guarantees, when speech watermarks survive laundering, and yields a
 measurable geometric predictor that --- for a fixed mel-reading detector --- generalizes
-across attackers and held-out speakers, while reversing in the waveform-detector domain:
-survival is a property of the (channel, detector) pair. Honest accounting --- of what is
-proved, what is measured, and what deployed detectors actually do under attack --- is the
-paper's method as much as its message.
+across attackers and held-out speakers under both paired and unpaired detectability
+statistics. Honest accounting --- of what is proved, what is measured, what replicates,
+and what deployed detectors actually do under attack --- is the paper's method as much as
+its message.
 
 \vfill\pagebreak
 

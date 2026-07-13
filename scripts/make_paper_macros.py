@@ -99,9 +99,12 @@ def _within_rho_ci(e2: dict, pred: str = "pred_sensitivity",
 
 
 def _necessity_unpaired(e2: dict, rel_threshold: float = 0.25) -> dict:
-    """Necessity on the UNPAIRED detectability responses (the paired statistic is
-    a deterministic comparison and detects arbitrarily small leakage — it answers
-    'is transmission exactly zero', not 'is the mark detectable')."""
+    """Necessity on the UNPAIRED detectability response. Both responses are reported
+    in the paper and agree on the mel-domain result; the unpaired one is used here
+    because it is the operationally-faced 'is the mark detectable against host
+    variability' quantity, whereas the paired statistic answers the stricter 'is
+    per-utterance transmission exactly zero' (see e2_predictor.py). Neither is
+    'the meaningful one' — they answer different questions and the paper says so."""
     pts = e2["points_test"]
     strata = np.array([p["attacker"] for p in pts])
     s = np.array([p["pred_sensitivity"] for p in pts], float)
@@ -146,6 +149,15 @@ def macros(e1: dict, e2: dict, e3: dict) -> list[str]:
         ("\\newcommand{\\permP}{<10^{-3}}" if pm_m['p_value'] <= 0.002
          else f"\\newcommand{{\\permP}}{{{pm_m['p_value']:.3g}}}"),
         f"\\newcommand{{\\spearmanSensWave}}{{{f2(pm_w['observed_within_spearman'])}}}",
+        # paired (per-utterance transmission-isolating) statistic — reported alongside
+        # the unpaired one so the mel result's robustness (and the waveform result's
+        # non-robustness) is visible.
+        f"\\newcommand{{\\spearmanSensPaired}}"
+        f"{{{f2(e2['permutation_paired_mel']['pred_sensitivity']['observed_within_spearman'])}}}",
+        f"\\newcommand{{\\rhoWavePairedEnc}}"
+        f"{{{f2(e2['by_attacker_paired_wave']['encodec6k']['phi_fit']['spearman'])}}}",
+        f"\\newcommand{{\\rhoWavePairedSnac}}"
+        f"{{{f2(e2['by_attacker_paired_wave']['snac']['phi_fit']['spearman'])}}}",
         f"\\newcommand{{\\spearmanMagFrac}}"
         f"{{{f2(e2['permutation_auc_mel']['pred_stft_mag_fraction']['observed_within_spearman'])}}}",
         f"\\newcommand{{\\spearmanSNR}}"

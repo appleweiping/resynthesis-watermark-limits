@@ -126,10 +126,17 @@ def run_split(split: str, man: dict, attackers, an: MelAnalysis, args,
             pa = per_att[att.name]
             neg_w, pos_w = np.array(pa["neg_w"]), np.array(pa["pos_w"])
             neg_m, pos_m = np.array(pa["neg_m"]), np.array(pa["pos_m"])
-            # PAIRED transmission statistics: attacks are deterministic and the
-            # probe is evaluated on the same utterance marked vs clean, so the
-            # per-utterance score difference isolates the transmitted pattern
-            # (unpaired AUC drowns it in host variability across utterances).
+            # TWO complementary responses, BOTH reported in the paper:
+            #  * unpaired oriented AUC (auc_mel/auc_wave, below): detectability of the
+            #    mark against host variability across utterances -- the operationally
+            #    faced quantity;
+            #  * paired transmission (here): per-utterance marked-vs-clean comparison,
+            #    which isolates the deterministically-transmitted pattern (host largely
+            #    cancels). Stricter; a within-attacker positive here means genuine
+            #    per-utterance transmission, not a cross-utterance level effect.
+            # The mel-domain s_W result is positive+significant under BOTH; the
+            # waveform-domain sign reversal appears ONLY unpaired (does not survive
+            # here), so the paper does not claim it as robust.
             paired_m = float(np.mean(pos_m > neg_m) + 0.5 * np.mean(pos_m == neg_m))
             paired_w = float(np.mean(pos_w > neg_w) + 0.5 * np.mean(pos_w == neg_w))
             points.append({
