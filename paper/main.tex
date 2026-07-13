@@ -283,11 +283,12 @@ relative to what each channel preserves and how the channel moves clean signals 
 and no sign/order inversion of scores occurred anywhere in the final protocol.
 
 \noindent\textbf{E3 --- multi-bit proof of concept (no rate claim).}
-A $B$-bit payload in the unified mel domain with frame-differential BPSK and a fully
-\emph{blind} decoder survives mel-GL, Vocos, and codec round-trips with BER/BLER
-reported with binomial CIs. This demonstrates the invariant sub-channel carries bits; it
-is \emph{not} an achievable-rate measurement and we claim no bits/s at target
-reliability.
+An $8$-bit payload in the unified mel domain (frame-differential BPSK, fully
+\emph{blind} decoder, PESQ $4.2$) is carried at BER $0.10$ under mel-GL and Vocos and
+$0.17$ under EnCodec and DAC (clean $0.05$), but fails under SNAC (BER $0.47$); all with
+binomial CIs. This demonstrates the invariant sub-channel carries bits through most
+resynthesizers; it is \emph{not} an achievable-rate measurement and we claim no bits/s
+at target reliability.
 
 \section{Relation to prior work}
 Attack studies document the collapse~\cite{oreilly2025shallow,wen2025sok}; invariant/
