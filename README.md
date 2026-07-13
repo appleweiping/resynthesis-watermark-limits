@@ -67,14 +67,15 @@ Full statements and proofs: [`docs/THEORY.md`](docs/THEORY.md).
 
 ## Evaluation protocol (what makes the numbers trustworthy)
 
-- **Raw AUC and oriented AUC** `max(a, 1−a)` are both reported. Raw < 0.5 with high
-  oriented = score inversion = operational failure, *never* "erasure". Theory statements
-  attach to oriented separability only.
-- **Operating points** (TPR at 1% FPR) use thresholds fixed **only on an independent
-  calibration split** (≥5000 clean dev-clean clips, speaker-disjoint from test by
-  LibriSpeech partition). The test split never touches threshold selection.
-  Counts carry Clopper–Pearson 95% intervals. An **attack-aware recalibration** row is
-  reported as a labeled diagnostic.
+- **Raw AUC and oriented AUC** `max(a, 1−a)` are both reported. A raw AUC < 0.5 with high
+  oriented AUC is a score inversion = operational failure, *never* "erasure" (it did not
+  occur anywhere in the final protocol, but the machinery flags it if it does). Theory
+  statements attach to oriented separability only.
+- **Operating points** (TPR **and achieved FPR** at 1% FPR) use thresholds fixed **only
+  on an independent calibration split** of **7,157 clean negatives** (dev-clean +
+  dev-other + test-other, all speaker-disjoint from the test-clean evaluation split).
+  The test split never touches threshold selection. Counts carry Clopper–Pearson 95%
+  intervals. An **attack-aware recalibration** row is reported as a labeled diagnostic.
 - **Cluster bootstrap**: AUC CIs resample utterances (paired pos/neg per cluster), never
   independent pos/neg shuffling.
 - **Matched perceptual budget**: every watermark (AudioSeal, WavMark, SilentCipher, and
@@ -87,8 +88,8 @@ Full statements and proofs: [`docs/THEORY.md`](docs/THEORY.md).
   never silently drop a channel.
 - **Constructed marks are verified, not assumed**: the kernel-direction construction
   (alternating projections onto quadrature ∩ consistent spectrograms) reports its
-  measured analysis-change ratio vs a random control at operating amplitude
-  (first-order leakage ≈ 0.06×, second-order floor ≈ 0.15× — real numbers from the run).
+  measured analysis-change ratio vs a random control (first-order leakage ≈ 0.06×,
+  second-order floor ≈ 0.16× at operating amplitude — real numbers from the run).
 - The genie-aided matched-filter probe used in the geometry experiment is a
   **diagnostic**, clearly labeled; deployed-detector conclusions come only from the real
   baselines' own detectors.
@@ -103,21 +104,35 @@ Full statements and proofs: [`docs/THEORY.md`](docs/THEORY.md).
 | EnCodec 6/3/1.5 kbps, DAC 16k, SNAC 24k | + constructed kernel/row marks (geometry probes) |
 | kNN-VC self voice-conversion, top-k ∈ {4, 8} | |
 
-## Experiments
+## Results (headline)
 
-- **E1 — survival of deployed watermarks** at matched median PESQ across all channels:
-  raw/oriented AUC with cluster-bootstrap CIs, calibrated TPR@1%FPR (Clopper–Pearson),
-  payload accuracy, recalibration diagnostic. Per-clip score arrays ship in
-  `results/e1_scores.npz`.
-- **E2 — predictor validation**: ≥100 random directions × randomized budgets; fit the
-  survival mapping on dev-clean, evaluate on test-clean (speaker-disjoint): Spearman,
-  R², RMSE with bootstrap CIs; competitors (waveform SNR, STFT-magnitude fraction,
-  spectral centroid); within-attacker permutation test.
-- **E3 — multi-bit proof of concept** with a fully blind frame-differential decoder:
-  BER/BLER with binomial CIs. Explicitly **not** an achievable-rate measurement.
+**E1 — deployed watermarks (N=1000 clips, matched median PESQ ≈ 4.2–4.6).** Every
+baseline loses its calibrated operating point under **every** lossy channel, in two
+sharply different modes:
 
-*(Numbers land in the paper via `scripts/make_paper_macros.py` — the manuscript cannot
-drift from the result JSONs. Runs in progress; this README states the protocol.)*
+| Mode | What happens | Where |
+|---|---|---|
+| **Erasure** | separability collapses (oriented AUC → 0.50, TPR → 0), unrecoverable by recalibration | SilentCipher & WavMark under *all* channels; AudioSeal under mel-inversion, Vocos-EnCodec, SNAC, self-VC |
+| **Calibration failure** | separability *retained* (AUC ≈ 0.93) but the fixed threshold's achieved FPR explodes 0.01 → 0.80–0.87 as the codec pushes clean audio across the boundary | AudioSeal under the EnCodec family |
+
+The near-lossless STFT-GL control preserves all three (AUC ≈ 1.0, TPR ≈ 0.9–1.0),
+confirming the pipeline. No score sign/order inversion occurred in the final protocol.
+
+**E2 — predictor validation (held-out).** Channel-relative sensitivity `s_W` predicts
+mel-domain detectability **within every attacker** (per-attacker Spearman 0.48–0.80;
+pooled within-attacker **ρ = 0.72, 95% CI [0.60, 0.80]**, permutation **p < 10⁻³**),
+replicated at ρ = 0.66 / 0.60 on two further independent manifest seeds. Competitors
+fail (waveform SNR ρ = −0.13, spectral centroid ρ = −0.27). The exact-erasure regime
+holds out-of-sample: the 31 near-null directions deviate from chance by a **maximum** of
+|AUC − 0.5| = 0.045. In the *waveform* domain the codecs show the opposite dependence
+(EnCodec ρ = −0.76) — survival is a property of the (channel, detector-domain) pair.
+
+**E3 — multi-bit proof of concept (blind decoder, 8 bits, PESQ 4.2).** BER 4.5% clean →
+10% (mel-GL / Vocos), 17% (EnCodec / DAC), 47% (SNAC, a reported failure case). This
+demonstrates the invariant sub-channel carries bits; it is **not** a rate measurement.
+
+*(All numbers are injected into the paper by `scripts/make_paper_macros.py` from the
+result JSONs — the manuscript cannot drift from the code.)*
 
 ## Reproducing
 
