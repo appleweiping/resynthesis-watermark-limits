@@ -223,8 +223,9 @@ def e1_table(e1: dict) -> list[str]:
     lines = [
         "% AUTO-GENERATED: oriented AUC / TPR / achieved FPR per (attacker, baseline)",
         "\\begin{table}[t]\\centering",
-        "\\caption{Deployed watermarks under analysis--resynthesis at matched median "
-        "PESQ. Cells: oriented AUC\\,/\\,TPR\\,/\\,\\emph{achieved} FPR at the 1\\%-FPR "
+        "\\caption{Deployed watermarks under analysis--resynthesis, each at its native "
+        "transparent strength (\\emph{not} PESQ-equalized; per-baseline PESQ/SI-SDR in "
+        "text). Cells: oriented AUC\\,/\\,TPR\\,/\\,\\emph{achieved} FPR at the 1\\%-FPR "
         "threshold fixed on the independent calibration split "
         f"($n={e1['n_calib']}$ clean negatives). Outcomes: \\emph{{erasure}} "
         "(AUC$\\to$0.5, TPR$\\to$0); \\emph{calibration failure} (AUC retained, "
