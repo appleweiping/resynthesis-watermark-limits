@@ -11,9 +11,9 @@ final runs land; nothing is marked done without pointing at code/results.
 | 4 | Surface/nullspace mark at reasonable perceptual quality | ✅ | All constructed marks PESQ-matched (4.2 target) via `scale_to_pesq`; old audible 5 kHz carrier deleted |
 | 5 | Rate experiment → reliable bps/BLER or fully downgraded | ✅ | Downgraded: E3 = 8-bit blind PoC, BER/BLER + binomial CIs, explicit "no achievable-rate measurement" (e3_payload_poc.py, paper §E3) |
 | 6 | 1% FPR from independent calibration set (≥5000) | ✅ | 7,157 clean negatives: dev-clean 1,928 + dev-other 2,568 + test-other 2,661 (all speaker-disjoint from test-clean); thresholds only from calibration (`threshold_at_fpr` raises below 1,000; rethreshold_e1.py); Clopper–Pearson CIs |
-| 7 | ≥1000 clips, speaker-disjoint splits, multi-key/seed | ✅/🔶 | test = 1,000 clips / 40 speakers / 20F+20M (manifest stats); calib/fit vs test speaker-disjoint by partition; keys: 2 (audioseal, wavmark), 1 (silentcipher; disclosed); seeds: manifest ×3, E2 seed-robustness runs 🔶 |
+| 7 | ≥1000 clips, speaker-disjoint splits, multi-key/seed | ✅ | test = 1,000 clips / 40 speakers / 20F+20M (manifest stats); calib/fit vs test speaker-disjoint by partition; keys: 2 (audioseal, wavmark), 1 (silentcipher; disclosed); E2 replicated on 3 independent manifest seeds (ρ 0.72/0.66/0.60, all p<10⁻³) |
 | 8 | Voice conversion + multiple codecs included | ✅ | kNN-VC self-VC top-k∈{4,8} (WavLM+HiFi-GAN, level-matched); EnCodec 6/3/1.5k + DAC + SNAC; Vocos + Vocos-EnCodec |
-| 9 | Latent-Mark / Feature-Aligned related work + strong baselines | ✅/🔶 | Cited & differentiated (refs verified via arXiv; RELATED_WORK.md); baselines AudioSeal + WavMark + SilentCipher (Timbre not included — noted as limitation) 🔶 pending final E1 rows |
+| 9 | Latent-Mark / Feature-Aligned related work + strong baselines | ✅ | Cited & differentiated (refs verified via arXiv; RELATED_WORK.md); 3 deployed baselines AudioSeal + WavMark + SilentCipher all run at N=1000 (Timbre not included — noted as limitation) |
 | 10 | Full repro environment; fail-loudly on missing attackers | ✅ | requirements-audio.lock (exact versions + model sources); strict registries raise; per-clip score arrays saved; one-command runner |
 | 11 | Surrogate theorems not extrapolated to all speech generators | ✅ | Prop 1 (general) vs Thm 1 (surrogate) separation in paper/THEORY.md/docstrings; "closed forms do NOT transfer" stated |
 | 12 | Metric consistency (one primary metric; both reported) | ✅ | Oriented AUC = separability (theory-linked); TPR@1%FPR = operational; recalibration diagnostic labeled; all rows carry all metrics |
@@ -27,7 +27,8 @@ final runs land; nothing is marked done without pointing at code/results.
   16 kHz model is unreachable through the package's byte API — a documented upstream
   bug); resampling is part of its embed/decode path.
 - kNN-VC attack definition was fixed mid-campaign (VAD disabled); SilentCipher's two
-  kNN-VC rows are being re-run with the final definition for consistency. 🔶
+  kNN-VC rows were re-run with the final definition and spliced in (consistent across
+  all baselines). ✅
 - E3's blind decoder fails under SNAC (BER ≈ 0.47) — reported as a failure case.
 - Timbre-style watermark baseline not included.
 - Adaptive/key-aware attacks out of scope (stated).
