@@ -257,12 +257,14 @@ $p\permP$), as does the static magnitude-change fraction ($\spearmanMagFrac$) --
 ($\spearmanCentroid$) do not. This holds under both the unpaired detectability response
 above and a stricter \emph{paired}, per-utterance transmission statistic
 ($s_\W$ pooled $\spearmanSensPaired$, $p\permP$; seeds replicate), so it is not an
-artifact of host variability. Empirically, the near-null regime behaves as the
-exact-erasure condition (Prop.~\ref{prop:general}) would suggest: the $\necNLow$
-directions with $s_\W\!\le\!0.25\times$ median (they exist only for the mel-analysis
-channels --- the codecs' kernels are too small to reach) deviate from chance by median
-$\necLowMel$, \emph{maximum} $\necMaxLowMel$ --- an observed monotonicity, not a proof
-that Prop.~\ref{prop:general} holds for these nonlinear channels. A \emph{waveform}-domain
+artifact of host variability. Low-$s_\W$ directions are \emph{operationally} hard to detect: the $\necNLow$ directions
+with $s_\W\!\le\!0.25\times$ median (only on the mel-analysis channels --- the codecs'
+kernels are too small to reach) deviate from chance by median $\necLowMel$, maximum
+$\necMaxLowMel$ for the unpaired detector. They are \emph{not} exactly erased, however:
+our kernel marks are only first-order null (measured second-order leakage
+$\nullLeakOp\times$ a random direction's), and a genie \emph{paired} detector still
+resolves that leakage in the mel domain. So low $s_\W$ predicts low operational
+detectability, not the zero-transmission of the exact-erasure condition. A \emph{waveform}-domain
 detector shows a weaker, opposite-signed unpaired trend for EnCodec/SNAC
 ($\rho_s=\rhoWaveEncodec/\rhoWaveSnac$), consistent with waveform codecs carrying sub-mel
 detail; but this does \emph{not} survive the paired transmission statistic
@@ -274,8 +276,9 @@ observation and do \emph{not} claim a robust detector-domain sign reversal.
   \includegraphics[width=\linewidth]{fig_e2_predictor}
   \caption{E2, held-out test split. (a) Channel-relative sensitivity $s_\W$ vs.\
   mel-probe detectability, per attacker, with isotonic fits learned on the fit split.
-  (b) Directions in the absolute near-null regime stay at chance in both probe
-  domains.}
+  (b) For the \emph{unpaired} (operational) detector, directions in the absolute near-null
+  regime stay near chance in both probe domains (a genie paired detector still resolves
+  their second-order leakage; see text).}
   \label{fig:e2}
 \end{figure}
 
@@ -290,17 +293,18 @@ we report oriented AUC (utterance-clustered bootstrap CIs) and the calibrated op
 point --- TPR \emph{and achieved FPR} at the 1\%-FPR threshold fixed on \nCalib{}
 independent clean negatives (Clopper--Pearson intervals) --- plus an attack-aware
 recalibration diagnostic (Table~\ref{tab:e1}). We keep two questions separate: does
-\emph{separability} survive (oriented AUC, CI vs.\ $0.5$) and does the \emph{calibrated
-operating point} survive (TPR at the fixed-threshold's achieved FPR)? All three baselines
-are perfect on the near-lossless STFT control. SilentCipher's \emph{continuous} detector
-falls to chance (oriented AUC $\to\!0.50$ with proper CIs, TPR $\to\!0.00$) under all nine
-lossy channels --- a measured separability collapse; WavMark's payload decoder
-desynchronizes to a constant score under every lossy channel, so its exact $0.50$
-(zero-width CI) is a deployed-decoder \emph{sync failure}, consistent with (but not itself
-a measurement of) that collapse. AudioSeal is more varied: separability is \emph{erased} only by SNAC and
-self-VC (AUC $\to\!0.50$--$0.51$, CI covers $0.5$); under mel-inversion, Vocos and
-Vocos-EnCodec it retains \emph{weak} separability (AUC $0.54$--$0.63$, CIs above $0.5$)
-but the operating point is dead (TPR $\le0.07$); under EnCodec it keeps \emph{strong}
+\emph{separability} survive (\emph{raw} AUC, two-sided CI vs.\ $0.5$ --- the oriented CI
+is one-sided by construction) and does the \emph{calibrated operating point} survive (TPR
+at the fixed-threshold's achieved FPR)? All three baselines are perfect on the
+near-lossless STFT control. SilentCipher's \emph{continuous} detector falls to chance
+(raw AUC $\to\!0.50$, CI covering $0.5$, TPR $\to\!0.00$) under all nine lossy channels
+--- a measured separability collapse; WavMark's payload decoder desynchronizes to a
+constant score under every lossy channel, so its exact $0.50$ (zero-width CI) is a
+deployed-decoder \emph{sync failure}, consistent with (but not itself a measurement of)
+that collapse. AudioSeal is more varied: separability is \emph{erased} only by SNAC and
+self-VC (raw AUC $0.50$--$0.51$, CI covers $0.5$); under mel-inversion, Vocos and
+Vocos-EnCodec it retains \emph{weak} separability (raw AUC $0.52$--$0.63$, CI excludes
+$0.5$) but the operating point is dead (TPR $\le0.07$); under EnCodec it keeps \emph{strong}
 separability (AUC $0.93/0.81$) yet the fixed threshold's FPR explodes
 ($0.01\!\to\!0.73/0.80$) as the codec pushes \emph{clean} audio across the boundary (a
 \emph{calibration failure}); and under DAC it merely \emph{degrades} (AUC $0.93$, FPR
