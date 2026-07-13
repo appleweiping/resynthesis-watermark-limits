@@ -64,13 +64,15 @@ analysis output unchanged a.s., the laundered laws coincide and no detector beat
 In a linear-Gaussian surrogate we obtain closed forms: the channel transmits exactly the
 equivalence class of the perturbation modulo $\ker\A$, with surviving exponent
 $\tfrac18\norm{P\delta}^2$; a Gaussian \emph{achievable lower bound} $\Rlb$ (not a
-capacity) covers blind embedders. The model's empirical content is a measurable,
-channel-relative \emph{survival predictor}: each attacker's own analysis sensitivity.
-On LibriSpeech ($\nTest$ speaker-disjoint test clips, thresholds from $\nCalib$ independent
-calibration clips), across five resynthesis families (spectral inversion, a neural vocoder,
-and three neural codecs), the predictor tracks held-out post-attack separability within
-every attacker (pooled Spearman $\spearmanSens$, perm.\ $p\permP$), while SNR and
-spectral-centroid controls fail. Deployed watermarks (AudioSeal, WavMark, SilentCipher),
+capacity) covers blind embedders. The model's empirical content is a measurable
+\emph{survival predictor}: geometric quantities --- each attacker's own analysis
+sensitivity, or a static magnitude-change fraction. On LibriSpeech ($\nTest$
+speaker-disjoint test clips, thresholds from $\nCalib$ independent calibration clips),
+across five resynthesis families (spectral inversion, a neural vocoder, and three neural
+codecs), these predict held-out post-attack separability \emph{for a fixed mel-reading
+detector} within every attacker (pooled Spearman $\spearmanSens$, perm.\ $p\permP$),
+while SNR and spectral-centroid controls fail --- survival is a property of the (channel,
+detector-domain) pair: for a waveform-correlation detector the codecs reverse this. Deployed watermarks (AudioSeal, WavMark, SilentCipher),
 each at its native transparent strength, lose their calibrated operating point under
 nearly every lossy channel, in modes we keep separate: \emph{erasure} (separability itself
 collapses), \emph{calibration failure} (separability remains but the fixed threshold's
@@ -114,9 +116,10 @@ with exponent $\tfrac18\norm{P\delta}^2$ (\S\ref{sec:lg}).
 \emph{not} a watermarking capacity: informed embedding~\cite{costa1983writing,
 moulin2003information} can exceed it and no rate converse is claimed (\S\ref{sec:lg}).
 (iv)~The finding that \emph{geometric} quantities --- each attacker's own analysis
-sensitivity $s_\W$, or a static magnitude-change fraction --- predict post-attack
-detectability on \emph{held-out, speaker-disjoint} data across five resynthesis families,
-while budget (SNR) and spectral-centroid controls do not (\S\ref{sec:exp}).
+sensitivity $s_\W$, or a static magnitude-change fraction --- predict \emph{mel-domain}
+post-attack detectability on \emph{held-out, speaker-disjoint} data across five
+resynthesis families (while budget/centroid controls do not), with the sign reversing in
+the waveform-detector domain --- prediction is detector-domain-specific (\S\ref{sec:exp}).
 (v)~A calibrated operational evaluation of deployed watermarks, separating loss of
 \emph{separability} (oriented AUC) from loss of the \emph{calibrated operating point}
 (TPR and \emph{achieved} FPR at a threshold fixed on an independent calibration set) ---
@@ -328,16 +331,20 @@ embedder class; real capacities may be higher. The surrogate's closed forms are 
 claimed for nonlinear generators --- for those we claim only Prop.~\ref{prop:general}
 and the \emph{measured} predictive power of $s_\W$. The three deployed baselines run at
 native strength and are not PESQ-equalized (SI-SDR $\sisdrAS/\sisdrWM/\sisdrSC$\,dB);
-AudioSeal carries the most mark energy, so its greater survival under DAC/EnCodec is
-partly a strength effect we do not disentangle. Survival statements are about oriented
-separability or calibrated operating points, never raw sub-$0.5$ AUC read as erasure.
+AudioSeal carries the most mark energy, so we claim no cross-scheme robustness ranking;
+the survival heterogeneity is \emph{within} AudioSeal (WavMark and SilentCipher run at
+maximum strength yet are still fully erased, so energy cannot explain their collapse).
+Survival statements are about oriented separability or calibrated operating points, never
+raw sub-$0.5$ AUC read as erasure.
 
 \section{Conclusion}
 A restricted but precise subspace model of analysis--resynthesis explains, with
 correctly-scoped guarantees, when speech watermarks survive laundering, and yields a
-measurable channel-relative predictor that generalizes across attackers and held-out
-speakers. Honest accounting --- of what is proved, what is measured, and what deployed
-detectors actually do under attack --- is the paper's method as much as its message.
+measurable geometric predictor that --- for a fixed mel-reading detector --- generalizes
+across attackers and held-out speakers, while reversing in the waveform-detector domain:
+survival is a property of the (channel, detector) pair. Honest accounting --- of what is
+proved, what is measured, and what deployed detectors actually do under attack --- is the
+paper's method as much as its message.
 
 \vfill\pagebreak
 
