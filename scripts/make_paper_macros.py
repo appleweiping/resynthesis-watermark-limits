@@ -163,6 +163,8 @@ def macros(e1: dict, e2: dict, e3: dict) -> list[str]:
         f"{{{f2(e2['by_attacker_auc_wave']['encodec6k']['phi_fit']['spearman'])}}}",
         f"\\newcommand{{\\rhoWaveSnac}}"
         f"{{{f2(e2['by_attacker_auc_wave']['snac']['phi_fit']['spearman'])}}}",
+        f"\\newcommand{{\\rhoWaveDac}}"
+        f"{{{f2(e2['by_attacker_auc_wave']['dac']['phi_fit']['spearman'])}}}",
         f"\\newcommand{{\\nullLeakOp}}{{{f2(float(np.median(null_rel)))}}}",
         f"\\newcommand{{\\rowLeakOp}}{{{f2(float(np.median(row_rel)))}}}",
         f"\\newcommand{{\\pocBits}}{{{e3['bits']}}}",
