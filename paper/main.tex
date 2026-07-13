@@ -65,7 +65,7 @@ channel-relative \emph{survival predictor}: each attacker's own analysis sensiti
 On LibriSpeech ($\nTest$ speaker-disjoint test clips, thresholds from $\nCalib$ independent
 calibration clips), across spectral inversion, two neural vocoder pipelines, three neural
 codecs, and self voice-conversion, the predictor tracks held-out post-attack separability
-within every attacker (pooled Spearman $\spearmanSens$, perm.\ $p=\permP$), while SNR and
+within every attacker (pooled Spearman $\spearmanSens$, perm.\ $p\permP$), while SNR and
 spectral-centroid controls fail. Deployed watermarks (AudioSeal, WavMark, SilentCipher) at
 matched perceptual quality lose their calibrated operating point under \emph{every} lossy
 channel, in two distinct modes we keep separate: \emph{erasure} (separability itself
@@ -240,7 +240,7 @@ evaluated on test-clean only; all statistics are within-attacker (rank-pooled), 
 between-attacker level differences can neither create nor mask an association.
 Results (Fig.~\ref{fig:e2}): $s_\W$ predicts mel-domain detectability \emph{within
 every attacker} (per-attacker Spearman $\rhoMelmelgl/\rhoMelvocos/\rhoMelencodec/
-\rhoMeldac/\rhoMelsnac$; pooled $\spearmanSens$, permutation $p=\permP$), as does the
+\rhoMeldac/\rhoMelsnac$; pooled $\spearmanSens$, permutation $p\permP$), as does the
 static magnitude-change fraction ($\spearmanMagFrac$) --- both \emph{geometric}
 quantities --- while budget (SNR, $\spearmanSNR$) and spectral centroid
 ($\spearmanCentroid$) do not. The theory's \emph{one-sided} implication
