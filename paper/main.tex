@@ -272,8 +272,8 @@ point --- TPR \emph{and achieved FPR} at the 1\%-FPR threshold fixed on \nCalib{
 independent clean negatives (Clopper--Pearson intervals) --- plus an attack-aware
 recalibration diagnostic (Table~\ref{tab:e1}). Every baseline loses its operating point
 under every lossy channel, in two sharply different modes. \emph{Erasure}: SilentCipher
-collapses to chance under all ten channels (AUC $0.99\!\to\!0.50$, TPR
-$0.98\!\to\!0.00$, nothing recoverable by recalibration); AudioSeal is erased by
+and WavMark collapse to chance under all ten channels (AUC $0.99\!\to\!0.50$, TPR
+$\to\!0.00$, nothing recoverable by recalibration); AudioSeal is erased by
 spectral inversion, SNAC, and self-VC. \emph{Calibration failure}: under the EnCodec
 family AudioSeal \emph{retains} separability (AUC $0.93$) yet the fixed threshold's
 false-alarm rate explodes ($0.01\!\to\!0.80$--$0.87$): the codec round-trip pushes
