@@ -352,10 +352,11 @@ and the \emph{measured} predictive power of $s_\W$. The three deployed baselines
 native strength and are not PESQ-equalized (SI-SDR $\sisdrAS/\sisdrWM/\sisdrSC$\,dB);
 AudioSeal carries the most mark energy, so we claim no cross-scheme ranking; the survival
 heterogeneity we analyze is \emph{within} AudioSeal (constant energy, varying channel).
-WavMark's and SilentCipher's collapses are \emph{structural} (a decoder sync failure; a
-continuous-detector chance collapse), not amplitude effects. Survival statements are about
-oriented separability or calibrated operating points, never raw sub-$0.5$ AUC read as
-erasure.
+WavMark's collapse is structural --- a constant-score decoder desync, amplitude-invariant
+by construction; SilentCipher's continuous detector falls to chance as well, though we did
+not vary its embedding amplitude to rule out an energy contribution. Survival statements
+are about oriented separability or calibrated operating points, never raw sub-$0.5$ AUC
+read as erasure.
 
 \section{Conclusion}
 A restricted but precise subspace model of analysis--resynthesis explains, with
