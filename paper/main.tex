@@ -252,9 +252,13 @@ between-attacker level differences can neither create nor mask an association.
 Results (Fig.~\ref{fig:e2}): for a fixed mel-reading matched filter, $s_\W$ predicts
 detectability \emph{within every attacker} (per-attacker Spearman $\rhoMelmelgl/
 \rhoMelvocos/\rhoMelencodec/\rhoMeldac/\rhoMelsnac$; pooled $\spearmanSens$, permutation
-$p\permP$), as does the static magnitude-change fraction ($\spearmanMagFrac$) --- both
-\emph{geometric} quantities --- while budget (SNR, $\spearmanSNR$) and spectral centroid
-($\spearmanCentroid$) do not. This holds under both the unpaired detectability response
+$p\permP$), as does the static magnitude-change fraction ($\spearmanMagFrac$, in fact
+slightly better) --- both \emph{geometric} quantities --- while budget (SNR,
+$\spearmanSNR$) and spectral centroid ($\spearmanCentroid$) do not. The relation is
+\emph{within}-attacker and ordinal: $s_\W$'s absolute scale is not comparable across
+channels (mean $s_\W$ spans $0.6$--$74$ at roughly constant mean detectability), so it
+does not rank \emph{which} attacker erases more. This holds under both the unpaired
+detectability response
 above and a stricter \emph{paired}, per-utterance transmission statistic
 ($s_\W$ pooled $\spearmanSensPaired$, $p\permP$; seeds replicate), so it is not an
 artifact of host variability. Low-$s_\W$ directions are \emph{operationally} hard to detect: the $\necNLow$ directions
@@ -303,8 +307,9 @@ constant score under every lossy channel, so its exact $0.50$ (zero-width CI) is
 deployed-decoder \emph{sync failure}, consistent with (but not itself a measurement of)
 that collapse. AudioSeal is more varied: separability is \emph{erased} only by SNAC and
 self-VC (raw AUC $0.50$--$0.51$, CI covers $0.5$); under mel-inversion, Vocos and
-Vocos-EnCodec it retains \emph{weak} separability (raw AUC $0.52$--$0.63$, CI excludes
-$0.5$) but the operating point is dead (TPR $\le0.07$); under EnCodec it keeps \emph{strong}
+Vocos-EnCodec it retains \emph{weak} separability (raw AUC $0.52$--$0.63$ key-averaged, up
+to $0.72$ for one Vocos key, CI excludes $0.5$) with a near-dead operating point (TPR
+$0.01$--$0.12$); under EnCodec it keeps \emph{strong}
 separability (AUC $0.93/0.81$) yet the fixed threshold's FPR explodes
 ($0.01\!\to\!0.73/0.80$) as the codec pushes \emph{clean} audio across the boundary (a
 \emph{calibration failure}); and under DAC it merely \emph{degrades} (AUC $0.93$, FPR
@@ -355,11 +360,11 @@ erasure.
 \section{Conclusion}
 A restricted but precise subspace model of analysis--resynthesis explains, with
 correctly-scoped guarantees, when speech watermarks survive laundering, and yields a
-measurable geometric predictor that --- for a fixed mel-reading detector --- generalizes
-across attackers and held-out speakers under both paired and unpaired detectability
-statistics. Honest accounting --- of what is proved, what is measured, what replicates,
-and what deployed detectors actually do under attack --- is the paper's method as much as
-its message.
+measurable geometric predictor that --- for a fixed mel-reading detector --- ranks
+survival \emph{within} each attacker on held-out speakers, under both paired and unpaired
+detectability statistics. Honest accounting --- of what is proved, what is measured, what
+replicates, and what deployed detectors actually do under attack --- is the paper's method
+as much as its message.
 
 \vfill\pagebreak
 
