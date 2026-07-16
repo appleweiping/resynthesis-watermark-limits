@@ -3,6 +3,23 @@
 Status legend: ✅ done · 🔶 partial/disclosed · ❌ not done. This file is updated as the
 final runs land; nothing is marked done without pointing at code/results.
 
+> **Pre-submission fix batch (in progress).** A second review required, before the repo
+> can be called submission-ready: (P0-1) E2 on a common PESQ-4.2 budget with achieved
+> PESQ/SI-SDR/SNR as competitor predictors — **code done** (`e2_predictor.py`,
+> `scale_to_pesq`); (P0-2) cluster-aware E2 inference — common whole-direction
+> permutation + two-way bootstrap — **code done** (`e2_stats.py`); (P0-3) stable SHA-256
+> keys, fixed seeds, `rand_init=False` Griffin–Lim, pinned `run_audio_all` params,
+> byte-level macro check, GitHub Actions CI — **code done** (`repro.py`,
+> `check_macros_reproducible.py`, `.github/workflows/ci.yml`); (P0-4) model pinning by
+> HF revision + checkpoint hash — **machinery done** (`model_lock.py`,
+> `capture_model_lock.py`), SHA values captured on the run host; (P0-5) R_LB units
+> relabelled to *per invariant vector-channel use*; (P0-6) kNN-VC relabelled a
+> low-fidelity self-VC stress test with per-attacker clean PESQ reported.
+> **Pending:** the GPU E2 re-run (seeds 0/1/2) that regenerates the headline
+> ρ/CI/p under the corrected protocol, the `models.lock.json` capture, and the E1
+> speaker-cluster CI recompute. Until those land, the E2 numbers are marked provisional
+> in the README/paper and the repo is **not** marked submission-ready.
+
 **Adversarial-polish convergence.** After the P0/P1 rework, the paper + code were run
 through repeated multi-agent adversarial reviews (4 lenses + adversarial verification
 each). Confirmed-major count per round: **13 → 2 → 1 → 1 → 1 → 2 → 2 → 0 → 0**. Two

@@ -65,14 +65,18 @@ def main() -> None:
     ap.add_argument("--scores-out", default=str(ROOT / "results" / "e1_scores.npz"))
     args = ap.parse_args()
 
+    from .model_lock import verify_all
+    verify_all(strict=args.strict)                              # P0-4 (no-op if unpinned)
     man = load_manifest(args.manifest)
     attackers = build_attackers(args.attackers.split(","), args.device, args.strict)
     baselines = build_baselines(args.baselines.split(","), args.device, args.strict)
     keys = [1000 + 17 * k for k in range(args.keys)]
 
     # ---- load audio ------------------------------------------------------------
-    test = [(clip_uid(r), x) for _, r, x in
-            iter_split(man, "test", args.test_start + args.n_test)][args.test_start:]
+    _test_full = [(clip_uid(r), r["speaker"], x) for _, r, x in
+                  iter_split(man, "test", args.test_start + args.n_test)][args.test_start:]
+    test = [(uid, x) for uid, _, x in _test_full]
+    spk_of = {uid: spk for uid, spk, _ in _test_full}   # per-clip speaker (P1-3)
     calib = [x for _, _, x in iter_split(man, "calibration", args.n_calib)]
     for extra in filter(None, args.extra_calib.split(",")):
         em = load_manifest(ROOT / extra) if not Path(extra).is_absolute() \
@@ -145,8 +149,10 @@ def main() -> None:
             neg = np.array([b.score(x, key) for _, x, _ in marked])
             pos = np.array([b.score(y, key) for _, _, y in marked])
             clusters = np.array([uid for uid, _, _ in marked])
+            spk_clusters = np.array([spk_of[uid] for uid, _, _ in marked])
             rep = full_detection_report(
-                calib_scores[(b.name, key, "clean")], neg, pos, clusters)
+                calib_scores[(b.name, key, "clean")], neg, pos, clusters,
+                speaker_clusters=spk_clusters)
             row = {"baseline": b.name, "key": key, "attacker": "none",
                    "quality": quality, **rep}
             results.append(row)
@@ -162,7 +168,8 @@ def main() -> None:
                 neg_a, pos_a = np.array(neg_a), np.array(pos_a)
                 rep = full_detection_report(
                     calib_scores[(b.name, key, "clean")], neg_a, pos_a, clusters,
-                    calib_neg_attacked=calib_scores[(b.name, key, att.name)])
+                    calib_neg_attacked=calib_scores[(b.name, key, att.name)],
+                    speaker_clusters=spk_clusters)
                 results.append({"baseline": b.name, "key": key,
                                 "attacker": att.name, **rep})
                 score_store[f"{b.name}|{key}|{att.name}"] = np.stack([neg_a, pos_a])

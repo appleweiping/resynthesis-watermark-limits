@@ -68,11 +68,21 @@ def load_e1() -> dict:
     return merged
 
 
+def _headline_ci(e2: dict) -> list:
+    """The reported 95% CI of the within-attacker rank-pooled Spearman. Prefers the
+    two-way (direction x utterance) cluster bootstrap computed in e2_predictor.py
+    (P0-2, the widest / most conservative interval); falls back to recomputing the
+    direction-cluster CI for older result files."""
+    cc = e2.get("cluster_cis_auc_mel")
+    if cc and cc.get("ci_two_way_dir_x_utt", [None])[0] is not None:
+        return cc["ci_two_way_dir_x_utt"]
+    return list(_within_rho_ci(e2))
+
+
 def _within_rho_ci(e2: dict, pred: str = "pred_sensitivity",
                    resp: str = "auc_mel", n_boot: int = 2000, seed: int = 0):
     """Bootstrap CI (over test directions) of the WITHIN-attacker rank-pooled
-    Spearman — the statistic actually reported; the per-response _fit_eval CI
-    bootstraps the unnormalized pooled correlation and is not comparable."""
+    Spearman — fallback for result files predating the saved cluster CIs."""
     from scipy import stats as sps
 
     pts = e2["points_test"]
@@ -142,7 +152,7 @@ def macros(e1: dict, e2: dict, e3: dict) -> list[str]:
         # within-attacker pooled statistics (rank-normalized per attacker)
         f"\\newcommand{{\\spearmanSens}}{{{f2(pm_m['observed_within_spearman'])}}}",
         "\\newcommand{\\spearmanSensCI}{[" +
-        ", ".join(f2(v) for v in _within_rho_ci(e2)) + "]}",
+        ", ".join(f2(v) for v in _headline_ci(e2)) + "]}",
         # per-attacker isotonic R^2, median across attackers (snac noted in text)
         f"\\newcommand{{\\rTwoSens}}"
         f"{{{f2(float(np.median([v['isotonic']['r2'] for v in by_att.values()])))}}}",
@@ -164,6 +174,12 @@ def macros(e1: dict, e2: dict, e3: dict) -> list[str]:
         f"{{{f2(e2['permutation_auc_mel']['pred_snr_db']['observed_within_spearman'])}}}",
         f"\\newcommand{{\\spearmanCentroid}}"
         f"{{{f2(e2['permutation_auc_mel']['pred_spectral_centroid']['observed_within_spearman'])}}}",
+        # perceptual-budget predictors (now competitors under the PESQ-matched budget):
+        # both should be weak, showing the s_W signal is not a residual quality confound
+        f"\\newcommand{{\\spearmanPesq}}"
+        f"{{{f2(e2['permutation_auc_mel']['pred_pesq']['observed_within_spearman'])}}}",
+        f"\\newcommand{{\\spearmanSisdr}}"
+        f"{{{f2(e2['permutation_auc_mel']['pred_si_sdr']['observed_within_spearman'])}}}",
         # necessity (absolute near-null threshold; unpaired detectability)
         f"\\newcommand{{\\necNLow}}{{{nec['n_low']}}}",
         f"\\newcommand{{\\necLowMel}}{{{f2(nec['auc_mel']['low_med'])}}}",
@@ -182,6 +198,43 @@ def macros(e1: dict, e2: dict, e3: dict) -> list[str]:
         f"\\newcommand{{\\pocBits}}{{{e3['bits']}}}",
         f"\\newcommand{{\\pocPesq}}{{{f2(e3['pesq_median'])}}}",
     ]
+    # E3 block error rate (all bits correct) — bitwise retention, not reliable payload
+    ch = e3["channels"]
+    bler_map = {"blerClean": "none", "blerMel": "mel80_gl", "blerVocos": "vocos",
+                "blerEnc": "encodec6k", "blerDac": "dac", "blerSnac": "snac"}
+    for macro, key in bler_map.items():
+        if key in ch and "bler" in ch[key]:
+            lines.append(f"\\newcommand{{\\{macro}}}{{{f2(ch[key]['bler'])}}}")
+    # per-attacker clean-audio utility (PESQ on UNMARKED speech), so low-fidelity
+    # channels (kNN-VC ~1.25) are not read as effective laundering (P0-6)
+    sev = e1.get("attack_severity", {})
+    if sev:
+        meds = {a: v["pesq_clean_median"] for a, v in sev.items()
+                if "pesq_clean_median" in v}
+        if meds:
+            lines.append(f"\\newcommand{{\\pesqCleanLo}}{{{f2(min(meds.values()))}}}")
+            lines.append(f"\\newcommand{{\\pesqCleanHi}}{{{f2(max(meds.values()))}}}")
+            knn = [meds[a] for a in ("knnvc_self4", "knnvc_self8") if a in meds]
+            if knn:
+                lines.append(
+                    f"\\newcommand{{\\pesqCleanKnn}}{{{f2(float(np.mean(knn)))}}}")
+    # achieved perceptual budget of the CONSTRUCTED marks (P0-1): median + 5/95 pct
+    if "achieved_budget" in e2:
+        ab = e2["achieved_budget"]
+        lines += [
+            f"\\newcommand{{\\budgetPesqMed}}{{{f2(ab['pesq'][1])}}}",
+            f"\\newcommand{{\\budgetPesqLo}}{{{f2(ab['pesq'][0])}}}",
+            f"\\newcommand{{\\budgetPesqHi}}{{{f2(ab['pesq'][2])}}}",
+            f"\\newcommand{{\\budgetSisdrMed}}{{{ab['si_sdr'][1]:.0f}}}",
+            f"\\newcommand{{\\budgetSnrMed}}{{{ab['snr_db'][1]:.0f}}}",
+        ]
+    # cluster-aware CI provenance (direction / speaker / two-way) for the appendix
+    if "cluster_cis_auc_mel" in e2:
+        cc = e2["cluster_cis_auc_mel"]
+        lines.append("\\newcommand{\\spearmanSensCIdir}{[" +
+                     ", ".join(f2(v) for v in cc["ci_direction_cluster"]) + "]}")
+        lines.append("\\newcommand{\\spearmanSensCIspk}{[" +
+                     ", ".join(f2(v) for v in cc["ci_speaker_cluster"]) + "]}")
     # per-baseline clean-embed quality (the schemes are NOT matched — each saturates
     # at native full strength; report the true spread + SI-SDR energy proxy). Average
     # over keys and emit ONCE per baseline (LaTeX \newcommand rejects redefinition).

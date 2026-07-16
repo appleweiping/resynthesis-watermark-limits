@@ -30,7 +30,9 @@ Two survivable quantities, both under the masking budget :math:`\delta^\top M\de
    the clean host as interference, :math:`y = u + \eta`, :math:`\eta\sim\mathcal N(0, I)`.
    With input covariance :math:`Q\succeq0` and masking cost
    :math:`\mathrm{tr}(M_{\mathrm{row}}Q)\le D` (a per-block average budget over i.i.d.
-   blocks of invariant coordinates; units: nats per invariant coordinate use),
+   blocks, each block the :math:`k`-dim invariant vector; units: nats per use of the
+   :math:`k`-dimensional invariant vector channel --- a *total* over the :math:`k`
+   surviving coordinates, not a per-coordinate rate),
 
    .. math::
        R_{\mathrm{LB}} = \max_{\mathrm{tr}(M_{\mathrm{row}}Q)\le D}\
@@ -79,7 +81,7 @@ class SurvivingExponent:
 
 @dataclass(frozen=True)
 class RateLowerBound:
-    R_lb: float              # nats per invariant coordinate use (achievable lower bound)
+    R_lb: float              # nats per invariant VECTOR-channel use (total over k coords)
     power: np.ndarray        # water-filling power per invariant eigenmode
     masking_eigs: np.ndarray  # eigenvalues of the reduced masking metric
 

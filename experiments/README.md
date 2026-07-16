@@ -53,7 +53,10 @@ not a deployable detector; deployed-detector conclusions come only from the base
   operating point (TPR + achieved FPR from a 7,157-negative independent calibration).
 - **E2**: does a geometric quantity (channel-relative `s_W`, or the static magnitude
   fraction) predict post-attack detectability out-of-sample? Held-out fit(dev-clean)→
-  test(test-clean), within-attacker, with SNR/centroid competitors + permutation controls.
+  test(test-clean), within-attacker rank-pooled. Every constructed mark is at a common
+  PESQ-4.2 budget, so achieved PESQ/SI-SDR/SNR enter as competitor predictors alongside
+  spectral centroid. Inference is cluster-aware: a common whole-direction permutation
+  across attackers, plus direction / speaker / two-way (direction×utterance) bootstrap CIs.
 - **E3**: multi-bit proof of concept (blind decoder, BER/BLER + CIs) — **not** a rate
   measurement.
 

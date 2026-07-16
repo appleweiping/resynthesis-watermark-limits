@@ -52,19 +52,30 @@ def main() -> None:
              "--calib-extra-from", part, "--n-calib", "4000", "--out", out])
         extra.append(out)
 
+    # pin/verify the model set (P0-4): capture models.lock.json once if absent, then
+    # every experiment verifies checkpoint hashes against it at startup.
+    if not (ROOT / "models.lock.json").exists():
+        run([py, "scripts/capture_model_lock.py", "--device", args.device])
+
     m0 = f"data/manifest_seed{seeds[0]}.json"
     run([py, "-m", "experiments.audio.e1_survival", "--manifest", m0,
          "--device", args.device, "--n-test", str(args.n_test),
          "--extra-calib", ",".join(extra), "--strict"])
+    # EXACT parameters that generate the paper's E2 numbers (P0-3): 108 directions x
+    # 32 utts/dir, PESQ-matched budget, determinism seed 0. Changing any of these
+    # changes the reported statistics, so they are pinned here, not left to defaults.
     run([py, "-m", "experiments.audio.e2_predictor", "--manifest", m0,
-         "--device", args.device, "--strict"])
+         "--device", args.device, "--n-dirs", "108", "--utts-per-dir", "32",
+         "--max-utts", "400", "--seed", seeds[0], "--strict"])
     run([py, "-m", "experiments.audio.e3_payload_poc", "--manifest", m0,
          "--device", args.device, "--strict"])
-    # seed robustness for the headline predictor result (smaller sweeps)
+    # seed robustness for the headline predictor result (independent manifests +
+    # RNG offset via --seed; smaller 60-direction sweeps to bound cost)
     for s in seeds[1:]:
         run([py, "-m", "experiments.audio.e2_predictor",
              "--manifest", f"data/manifest_seed{s}.json", "--device", args.device,
-             "--n-dirs", "60", "--strict",
+             "--n-dirs", "60", "--utts-per-dir", "32", "--max-utts", "400",
+             "--seed", s, "--strict",
              "--out", f"results/e2_predictor_seed{s}.json"])
     run([py, "scripts/make_paper_macros.py"])
     print("ALL DONE")

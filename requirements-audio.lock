@@ -3,16 +3,20 @@
 # then `pip install --no-deps descript-audio-codec descript-audiotools` (they pin
 # an old torch), then the rest.
 #
-# Models (name -> revision/source):
-#   Vocos mel        charactr/vocos-mel-24khz        (HF)
-#   Vocos-EnCodec    charactr/vocos-encodec-24khz    (HF)
-#   EnCodec 24k      encodec_24khz                   (encodec pip package weights)
-#   DAC 16k          descript/dac_16khz              (github release via dac.utils.download)
-#   SNAC 24k         hubertsiuzdak/snac_24khz        (HF)
-#   AudioSeal        audioseal_wm_16bits / audioseal_detector_16bits
-#   WavMark          default checkpoint (HF: M4869/WavMark)
-#   SilentCipher     16k model (github release via silentcipher.get_model)
-#   kNN-VC           bshall/knn-vc torch.hub, prematched HiFi-GAN + WavLM-Large
+# Models (name -> source). EXACT commit SHAs + checkpoint SHA-256 hashes are pinned in
+# models.lock.json (generated on the run host by scripts/capture_model_lock.py; HF
+# from_pretrained passes revision= from it, and experiments verify every checkpoint
+# hash at startup via experiments.audio.model_lock.verify_all):
+#   Vocos mel        charactr/vocos-mel-24khz        (HF, revision pinned)
+#   Vocos-EnCodec    charactr/vocos-encodec-24khz    (HF, revision pinned)
+#   EnCodec 24k      encodec_24khz                   (encodec pip package weights, v0.1.1)
+#   DAC 16k          descript/dac_16khz              (github release via dac.utils.download; checksum in lock)
+#   SNAC 24k         hubertsiuzdak/snac_24khz        (HF, revision pinned)
+#   AudioSeal        audioseal_wm_16bits / audioseal_detector_16bits (audioseal 0.2.0; ckpt hash in lock)
+#   WavMark          default checkpoint (HF: M4869/WavMark; revision + hash in lock)
+#   SilentCipher     44.1 kHz model (44_1_khz/73999_iteration; HF Sony/SilentCipher snapshot;
+#                    the released 16 kHz model is unreachable through the package byte API — see docs)
+#   kNN-VC           bshall/knn-vc torch.hub (commit in lock) + prematched HiFi-GAN + WavLM-Large ckpts (hashed)
 #   Data             LibriSpeech dev-clean + test-clean (openslr.elda.org mirror)
 
 torch==2.8.0+cu128

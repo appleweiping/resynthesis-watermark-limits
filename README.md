@@ -83,7 +83,9 @@ Full statements and proofs: [`docs/THEORY.md`](docs/THEORY.md).
   4.42 / 4.27 / 4.60, SI-SDR 26 / 37 / 34 dB for AudioSeal / WavMark / SilentCipher). We
   do not force a common PESQ (which would push each scheme off its designed operating
   point) and we disclose that AudioSeal carries the most energy, so its greater survival
-  is partly a strength effect. Constructed marks (E2) *are* PESQ-matched to 4.2.
+  is partly a strength effect. Constructed marks (E2) are scaled to a common PESQ-WB 4.2
+  budget via `scale_to_pesq` (achieved PESQ/SI-SDR/SNR recorded per instance and used as
+  competitor predictors).
 - **Speaker-stratified manifests** (seeded): ~1000 test clips from all 40 test-clean
   speakers (voice-active random segments, not file heads), multiple keys, 3 seeds.
 - **Fail-loudly**: formal runs abort if any attacker/baseline/model is missing — results
@@ -106,11 +108,24 @@ Full statements and proofs: [`docs/THEORY.md`](docs/THEORY.md).
 | EnCodec 6/3 kbps, DAC 16k, SNAC 24k | + constructed kernel/row marks (geometry probes) |
 | kNN-VC self voice-conversion, top-k ∈ {4, 8} | |
 
+## Status — pre-submission fix batch in progress
+
+The E2 protocol was upgraded to (i) a **common PESQ-4.2 perceptual budget** for every
+constructed mark (was per-utterance random SNR), with achieved PESQ/SI-SDR/SNR added as
+competitor predictors; (ii) **cluster-aware inference** — a common whole-direction
+permutation across attackers and a two-way (direction×utterance) cluster bootstrap; and
+(iii) **stable seeding** (SHA-256 keys, fixed NumPy/Torch/CUDA seeds, `rand_init=False`
+Griffin–Lim). The E2 headline numbers below are from the *prior* random-budget run and are
+being regenerated under the corrected protocol; they are retained only if they survive the
+recompute. E1 and E3 are unaffected. See `experiments/audio/e2_predictor.py` and
+`experiments/audio/repro.py`.
+
 ## Results (headline)
 
 **E1 — deployed watermarks (N=1000 clips, each at native transparent strength, PESQ
-4.42/4.27/4.60).** All three baselines are perfect on the near-lossless STFT-GL control
-(AUC ≈ 1.0, TPR ≈ 0.9–1.0) and lose their calibrated operating point under nearly all
+4.42/4.27/4.60).** All three baselines retain strong performance on the near-lossless
+STFT-GL control (AUC ≈ 1.0, TPR ≈ 0.9–1.0) and lose their calibrated operating point under
+nearly all
 **nine lossy channels**, in four distinct outcomes:
 
 | Mode | What happens | Where |
@@ -122,7 +137,9 @@ Full statements and proofs: [`docs/THEORY.md`](docs/THEORY.md).
 
 No score sign/order inversion occurred in the final protocol.
 
-**E2 — predictor validation (held-out).** Channel-relative sensitivity `s_W` predicts
+**E2 — predictor validation (held-out).** *(Numbers below are from the prior random-budget
+run — see Status; they regenerate under the PESQ-matched + cluster-aware protocol.)*
+Channel-relative sensitivity `s_W` predicts
 mel-domain detectability **within every attacker** (per-attacker Spearman 0.48–0.80;
 pooled within-attacker **ρ = 0.72, 95% CI [0.60, 0.80]**, permutation **p < 10⁻³**),
 replicated at ρ = 0.66 / 0.60 on two further independent manifest seeds. Competitors
@@ -148,14 +165,16 @@ result JSONs — the manuscript cannot drift from the code.)*
 # CPU: surrogate theory + numerical sanity checks
 uv venv && uv pip install -e ".[dev]" && uv run pytest
 
-# GPU (see requirements-audio.lock for the exact frozen environment + model revisions;
+# GPU (see requirements-audio.lock for the locked environment + model sources;
 # install torch/torchaudio cu128 first; descript-audio-codec needs --no-deps)
 python experiments/run_audio_all.py --root /path/to/LibriSpeech_parent --device cuda
 ```
 
 `requirements-audio.lock` records every package version and model checkpoint source
-(HF revisions, GitHub release URLs) used for the paper runs. Manifests, seeds, keys,
-and per-utterance score arrays are committed or generated deterministically.
+(HF repo + revision/commit SHA, GitHub release URLs + checksums) used for the paper runs.
+Manifests, seeds, and keys are fixed; runs are seeded via `experiments/audio/repro.py`
+(`set_determinism`: PYTHONHASHSEED/NumPy/Torch/CUDA + deterministic cuDNN) and per-utterance
+score arrays ship with the results.
 
 ## Repository layout
 

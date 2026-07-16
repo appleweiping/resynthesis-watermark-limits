@@ -32,16 +32,11 @@ def main() -> None:
 
     if args.audio:
         print("=" * 70)
-        print("E1-E2 — real-speech instantiation (needs .[audio] + GPU)")
+        print("The real-speech pipeline (E1/E2/E3) is now a separate one-command runner")
+        print("with its own arguments (dataset root, device, seeds):")
+        print("    python experiments/run_audio_all.py --root <LibriSpeech parent> "
+              "--device cuda")
         print("=" * 70)
-        sys.path.insert(0, str(Path(__file__).resolve().parent / "audio"))
-        try:
-            import e1_converse_audio  # noqa: F401
-            e1_converse_audio.main()
-            import e2_achievability_audio  # noqa: F401
-            e2_achievability_audio.main()
-        except ImportError as exc:
-            print(f"[audio] stage needs the audio extras / a GPU: {exc}")
     print("\nDone. Figures in paper/figures/, numbers in results/.")
 
 

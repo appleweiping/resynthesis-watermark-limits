@@ -72,8 +72,10 @@ class StftGriffinLim(_Base):
 
         self.device = device
         self.an = MelAnalysis(device=device)
+        # rand_init=False -> deterministic all-zero phase seed (reproducibility P0-3)
         self.gl = torchaudio.transforms.GriffinLim(
-            N_FFT, hop_length=HOP, power=1.0, n_iter=n_iter).to(device)
+            N_FFT, hop_length=HOP, power=1.0, n_iter=n_iter,
+            rand_init=False).to(device)
 
     @torch.no_grad()
     def apply(self, wav):
@@ -96,8 +98,10 @@ class MelGriffinLim(_Base):
         self.device = device
         self.an = MelAnalysis(device=device)
         self.fb_pinv = torch.linalg.pinv(self.an.fb).to(device)   # (mels, freqs)
+        # rand_init=False -> deterministic all-zero phase seed (reproducibility P0-3)
         self.gl = torchaudio.transforms.GriffinLim(
-            N_FFT, hop_length=HOP, power=1.0, n_iter=n_iter).to(device)
+            N_FFT, hop_length=HOP, power=1.0, n_iter=n_iter,
+            rand_init=False).to(device)
 
     @torch.no_grad()
     def apply(self, wav):
@@ -121,7 +125,10 @@ class VocosAttacker(_Base):
         from vocos import Vocos
 
         self.device = device
-        self.model = Vocos.from_pretrained("charactr/vocos-mel-24khz").to(device).eval()
+        from .model_lock import revision as _rev
+        self.model = Vocos.from_pretrained(
+            "charactr/vocos-mel-24khz",
+            revision=_rev("charactr/vocos-mel-24khz")).to(device).eval()
         self.up = torchaudio.transforms.Resample(SR, 24000).to(device)
         self.dn = torchaudio.transforms.Resample(24000, SR).to(device)
 
@@ -147,7 +154,10 @@ class VocosEncodecAttacker(_Base):
         self.device = device
         self.name = f"vocos_encodec{bandwidth:g}k"
         self.bandwidth = bandwidth
-        self.model = Vocos.from_pretrained("charactr/vocos-encodec-24khz").to(device).eval()
+        from .model_lock import revision as _rev
+        self.model = Vocos.from_pretrained(
+            "charactr/vocos-encodec-24khz",
+            revision=_rev("charactr/vocos-encodec-24khz")).to(device).eval()
         self.up = torchaudio.transforms.Resample(SR, 24000).to(device)
         self.dn = torchaudio.transforms.Resample(24000, SR).to(device)
 
@@ -228,7 +238,10 @@ class SnacAttacker(_Base):
         from snac import SNAC
 
         self.device = device
-        self.model = SNAC.from_pretrained("hubertsiuzdak/snac_24khz").to(device).eval()
+        from .model_lock import revision as _rev
+        self.model = SNAC.from_pretrained(
+            "hubertsiuzdak/snac_24khz",
+            revision=_rev("hubertsiuzdak/snac_24khz")).to(device).eval()
         self.up = torchaudio.transforms.Resample(SR, 24000).to(device)
         self.dn = torchaudio.transforms.Resample(24000, SR).to(device)
 

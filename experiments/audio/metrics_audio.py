@@ -103,6 +103,25 @@ def operating_point(
     }
 
 
+def _cluster_op_ci(test_neg, test_pos, thr, clusters, n_boot=2000, seed=0):
+    """Cluster-bootstrap CI of TPR and achieved FPR at a fixed threshold, resampling
+    CLUSTERS (e.g. speakers) with replacement — so the interval reflects speaker-level
+    rather than clip-level sampling variance (P1-3)."""
+    neg, pos = np.asarray(test_neg, float), np.asarray(test_pos, float)
+    clusters = np.asarray(clusters)
+    uniq = np.unique(clusters)
+    idx_by_c = {c: np.flatnonzero(clusters == c) for c in uniq}
+    rng = np.random.default_rng(seed)
+    tprs, fprs = np.empty(n_boot), np.empty(n_boot)
+    for b in range(n_boot):
+        draw = rng.choice(uniq, size=len(uniq), replace=True)
+        idx = np.concatenate([idx_by_c[c] for c in draw])
+        tprs[b] = float(np.mean(pos[idx] > thr))
+        fprs[b] = float(np.mean(neg[idx] > thr))
+    return ([float(np.percentile(tprs, 2.5)), float(np.percentile(tprs, 97.5))],
+            [float(np.percentile(fprs, 2.5)), float(np.percentile(fprs, 97.5))])
+
+
 def full_detection_report(
     calib_neg: np.ndarray,
     test_neg: np.ndarray,
@@ -112,6 +131,7 @@ def full_detection_report(
     target_fpr: float = 0.01,
     n_boot: int = 2000,
     seed: int = 0,
+    speaker_clusters: np.ndarray | None = None,
 ) -> dict:
     """The one reporting function every experiment must use.
 
@@ -119,6 +139,9 @@ def full_detection_report(
     test_neg/test_pos  : paired per-cluster scores on the test split
     calib_neg_attacked : scores on ATTACKED calibration negatives (for the
                          attack-aware recalibration diagnostic), optional
+    speaker_clusters   : per-clip speaker labels; when given, AUC and operating-point
+                         CIs are ALSO reported clustered by speaker (P1-3), not only
+                         by clip/utterance.
     """
     a_raw, a_raw_lo, a_raw_hi = cluster_bootstrap_auc(
         test_neg, test_pos, clusters, n_boot, seed, oriented=False)
@@ -133,6 +156,18 @@ def full_detection_report(
         "operating_point": op,
         "target_fpr": target_fpr,
     }
+    if speaker_clusters is not None:
+        _, sr_lo, sr_hi = cluster_bootstrap_auc(
+            test_neg, test_pos, speaker_clusters, n_boot, seed, oriented=False)
+        _, so_lo, so_hi = cluster_bootstrap_auc(
+            test_neg, test_pos, speaker_clusters, n_boot, seed, oriented=True)
+        out["auc_raw_ci_speaker"] = [sr_lo, sr_hi]
+        out["auc_oriented_ci_speaker"] = [so_lo, so_hi]
+        tci, fci = _cluster_op_ci(test_neg, test_pos, thr, speaker_clusters,
+                                  n_boot, seed)
+        out["operating_point"]["tpr_ci_speaker"] = tci
+        out["operating_point"]["fpr_ci_speaker"] = fci
+        out["n_speakers"] = int(len(np.unique(speaker_clusters)))
     if calib_neg_attacked is not None and len(calib_neg_attacked):
         ca = np.asarray(calib_neg_attacked, float)
         if len(ca) >= 500:

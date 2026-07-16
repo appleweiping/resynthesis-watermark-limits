@@ -113,8 +113,10 @@ empirically whether it predicts survival; nothing is claimed a priori.
 
 **Restricted class.** Uninformed (host-blind) encoder; Gaussian codebook keyed by `κ`;
 decoder knows `κ` but not the host; per-block average distortion `tr(M_row Q) ≤ D` over
-i.i.d. blocks of invariant coordinates; reliability = vanishing block error probability
-as blocklength → ∞. Units: nats per invariant coordinate use.
+i.i.d. blocks, each block being the `k`-dimensional invariant vector; reliability =
+vanishing block error probability as blocklength → ∞. Units: **nats per use of the
+`k`-dimensional invariant vector channel** — a *total* over the `k` surviving coordinates,
+not a per-coordinate rate (do not divide by `k`).
 
 **Statement (achievability only).** Rates below
 
