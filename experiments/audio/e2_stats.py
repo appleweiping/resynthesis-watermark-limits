@@ -88,14 +88,31 @@ def _fit_eval(fit_pts, test_pts, pred_key: str, response: str = "auc_oriented",
     return out
 
 
+def _restricted_permutation(rng, kind_of):
+    """A permutation of the direction axis that only moves directions WITHIN their
+    kind block (P0-B.2), so the null does not derive significance from the fixed
+    nullspace/rowspace/mixture composition. Falls back to a free permutation when
+    no kind labels are supplied."""
+    n = len(kind_of)
+    perm = np.arange(n)
+    if kind_of[0] is None:
+        return rng.permutation(n)
+    for k in set(kind_of):
+        idx = np.flatnonzero(np.array(kind_of) == k)
+        perm[idx] = idx[rng.permutation(len(idx))]
+    return perm
+
+
 def _common_perm_test(test_pts, pred_key: str, response: str,
-                      n_perm: int = 2000, seed: int = 0) -> dict:
+                      n_perm: int = 2000, seed: int = 0,
+                      restrict_kind: bool = True) -> dict:
     """WITHIN-attacker rank-pooled Spearman with a COMMON whole-direction permutation
-    null (P0-2). The same permutation of the direction axis is applied across every
-    attacker stratum, so a direction moves as one unit — respecting the fact that a
-    direction is a single cluster shared by all five attackers. An independent
-    within-attacker shuffle (the previous null) breaks that coupling and is
-    anticonservative."""
+    null (P0-2/P0-B.2). One permutation of the direction axis is applied across every
+    attacker stratum (a direction moves as one unit — the cluster shared by all
+    attackers); an independent within-attacker shuffle breaks that coupling and is
+    anticonservative. With ``restrict_kind`` the permutation is restricted to within
+    kind blocks, so the nullspace/rowspace/mixture composition cannot itself create
+    significance."""
     from scipy import stats as sps
 
     atts = sorted({p["attacker"] for p in test_pts})
@@ -104,13 +121,17 @@ def _common_perm_test(test_pts, pred_key: str, response: str,
     di = {d: i for i, d in enumerate(dirs)}
     X = np.full((len(atts), len(dirs)), np.nan)
     Y = np.full((len(atts), len(dirs)), np.nan)
+    kind_of = [None] * len(dirs)
     for p in test_pts:
         X[ai[p["attacker"]], di[p["dir"]]] = p[pred_key]
         Y[ai[p["attacker"]], di[p["dir"]]] = p[response]
+        if restrict_kind and "kind" in p:
+            kind_of[di[p["dir"]]] = p["kind"]
     if np.isnan(X).any() or np.isnan(Y).any():
         keep = [j for j in range(len(dirs))
                 if not (np.isnan(X[:, j]).any() or np.isnan(Y[:, j]).any())]
         X, Y = X[:, keep], Y[:, keep]
+        kind_of = [kind_of[j] for j in keep]
 
     def pooled(xm, ym):
         xr = np.vstack([sps.rankdata(xm[r]) / (xm.shape[1] + 1.0)
@@ -121,94 +142,140 @@ def _common_perm_test(test_pts, pred_key: str, response: str,
 
     obs = pooled(X, Y)
     rng = np.random.default_rng(seed)
-    null = np.array([pooled(X[:, rng.permutation(X.shape[1])], Y)
+    null = np.array([pooled(X[:, _restricted_permutation(rng, kind_of)], Y)
                      for _ in range(n_perm)])
     p = float((np.sum(np.abs(null) >= abs(obs)) + 1) / (n_perm + 1))
     return {"observed_within_spearman": obs, "p_value": p,
             "null_abs_95": float(np.percentile(np.abs(null), 95)),
             "n_perm": n_perm,
-            "null_type": "common whole-direction permutation across attackers"}
+            "null_type": ("common whole-direction permutation across attackers"
+                          + (", restricted within kind blocks" if restrict_kind
+                             and kind_of[0] is not None else ""))}
+
+
+def _cmp_matrix(u: dict) -> np.ndarray:
+    """C[i,j] = 1 if pos_i > neg_j, 0.5 if equal — so a WEIGHTED raw AUC is the
+    quadratic form w C w / (sum w)^2 (utterance i's pos and neg share weight w_i)."""
+    pos = np.asarray(u["pos_m"], float)
+    neg = np.asarray(u["neg_m"], float)
+    return ((pos[:, None] > neg[None, :]).astype(float)
+            + 0.5 * (pos[:, None] == neg[None, :]))
+
+
+def _weighted_oriented_auc(C: np.ndarray, w: np.ndarray) -> float | None:
+    sw = w.sum()
+    if sw <= 0:
+        return None
+    raw = float(w @ C @ w) / (sw * sw)
+    return max(raw, 1.0 - raw)
+
+
+def _pigeonhole_ci(by_dir, atts, pred_key, response, n_boot, seed,
+                   resample_dirs: bool, unit_key: str | None):
+    """Valid multiway cluster bootstrap (Owen 2007 pigeonhole; Cameron–Gelbach–Miller
+    multiway) of the within-attacker rank-pooled Spearman (P0-B).
+
+    A DIRECTION is one cluster (a whole row across all attackers); an UTTERANCE (or
+    SPEAKER) is a second, crossed cluster shared across every direction it appears in.
+    Direction multiplicity `w_d` is applied to all five attacker points of that
+    direction (same weight across attackers); the global unit weights `v_u` weight
+    utterance u identically wherever it occurs (same weight across directions). This
+    replaces the earlier implementation that collapsed the speaker resample to a
+    ``set`` and so silently dropped cluster multiplicity.
+
+      resample_dirs=True, unit_key=None      -> direction-cluster CI
+      resample_dirs=False, unit_key="speaker"-> speaker-cluster CI
+      resample_dirs=True, unit_key="uid"     -> two-way (direction x utterance) CI
+    """
+    dirs = sorted(by_dir)
+    prep = {}
+    for d in dirs:
+        for a in atts:
+            u = by_dir[d][a]["utts"]
+            prep[(d, a)] = (_cmp_matrix(u), np.asarray(u["sens"], float),
+                            list(u[unit_key]) if unit_key else None)
+    if unit_key:
+        all_units = sorted({uu for d in dirs
+                            for uu in by_dir[d][atts[0]]["utts"][unit_key]})
+        uidx = {uu: i for i, uu in enumerate(all_units)}
+    rng = np.random.default_rng(seed)
+    vals = []
+    for _ in range(n_boot):
+        dcount = (np.bincount(rng.integers(0, len(dirs), len(dirs)),
+                              minlength=len(dirs)) if resample_dirs
+                  else np.ones(len(dirs), int))
+        if unit_key:
+            ucount = np.bincount(rng.integers(0, len(all_units), len(all_units)),
+                                 minlength=len(all_units)).astype(float)
+        xs, ys, strata = [], [], []
+        for di, d in enumerate(dirs):
+            wd = int(dcount[di])
+            if wd == 0:
+                continue
+            for a in atts:
+                C, sens, units = prep[(d, a)]
+                if unit_key:
+                    w = ucount[[uidx[uu] for uu in units]]
+                    sw = w.sum()
+                    if sw <= 0:
+                        continue
+                    pv = (float(w @ sens / sw) if pred_key == "pred_sensitivity"
+                          else by_dir[d][a][pred_key])
+                    rv = _weighted_oriented_auc(C, w)
+                else:
+                    pv = by_dir[d][a][pred_key]
+                    rv = by_dir[d][a][response]
+                if rv is None:
+                    continue
+                xs.extend([pv] * wd); ys.extend([rv] * wd); strata.extend([a] * wd)
+        if len(set(strata)) < 2:
+            continue
+        v = _within_pooled_spearman(np.array(xs), np.array(ys), np.array(strata))
+        if not np.isnan(v):
+            vals.append(v)
+    return vals
 
 
 def _cluster_cis(test_pts, pred_key: str = "pred_sensitivity",
                  response: str = "auc_mel", n_boot: int = 2000,
                  seed: int = 0) -> dict:
-    """Bootstrap CIs of the within-attacker rank-pooled Spearman under three
-    clusterings (P0-2): by direction, by speaker, and two-way (direction x
-    utterance, nested — the widest and the one the paper reports)."""
+    """Bootstrap CIs of the within-attacker rank-pooled Spearman under three valid
+    clusterings (P0-B): by direction, by speaker, and a valid two-way
+    (direction x utterance) pigeonhole bootstrap."""
     atts = sorted({p["attacker"] for p in test_pts})
     by_dir: dict = defaultdict(dict)
     for p in test_pts:
         by_dir[p["dir"]][p["attacker"]] = p
-    dirs = sorted(by_dir)
-    rng = np.random.default_rng(seed)
 
-    def pooled_from(points):
-        x = np.array([p[pred_key] for p in points], float)
-        y = np.array([p[response] for p in points], float)
-        strata = np.array([p["attacker"] for p in points])
-        if len(np.unique(strata)) < 2:
-            return None
-        return _within_pooled_spearman(x, y, strata)
+    x = np.array([p[pred_key] for p in test_pts], float)
+    y = np.array([p[response] for p in test_pts], float)
+    strata = np.array([p["attacker"] for p in test_pts])
+    obs = _within_pooled_spearman(x, y, strata)
 
-    obs = pooled_from(test_pts)
+    dir_vals = _pigeonhole_ci(by_dir, atts, pred_key, response, n_boot, seed,
+                              resample_dirs=True, unit_key=None)
+    spk_vals = _pigeonhole_ci(by_dir, atts, pred_key, response, n_boot, seed + 1,
+                              resample_dirs=False, unit_key="speaker")
+    two_vals = _pigeonhole_ci(by_dir, atts, pred_key, response, n_boot, seed + 2,
+                              resample_dirs=True, unit_key="uid")
+    all_spk = sorted({s for d in by_dir for s in by_dir[d][atts[0]]["utts"]["speaker"]})
 
-    dir_vals = []
-    for _ in range(n_boot):
-        take = rng.choice(dirs, size=len(dirs), replace=True)
-        pts = [by_dir[d][a] for d in take for a in atts if a in by_dir[d]]
-        v = pooled_from(pts)
-        if v is not None:
-            dir_vals.append(v)
+    def diag(vals):
+        if not vals:
+            return {"ci": [None, None], "mean": None, "sd": None, "n": 0}
+        a = np.array(vals)
+        return {"ci": [float(np.percentile(a, 2.5)), float(np.percentile(a, 97.5))],
+                "mean": float(a.mean()), "sd": float(a.std()), "n": int(a.size)}
 
-    all_spk = sorted({s for d in dirs for s in by_dir[d][atts[0]]["utts"]["speaker"]})
-    spk_vals = []
-    for _ in range(n_boot):
-        keep = set(rng.choice(all_spk, size=len(all_spk), replace=True))
-        pts = []
-        for d in dirs:
-            base = by_dir[d][atts[0]]["utts"]["speaker"]
-            sel = [i for i, s in enumerate(base) if s in keep]
-            if len(sel) < 2:
-                continue
-            for a in atts:
-                u = by_dir[d][a]["utts"]
-                neg = np.array(u["neg_m"])[sel]; pos = np.array(u["pos_m"])[sel]
-                pts.append({"attacker": a,
-                            pred_key: float(np.mean(np.array(u["sens"])[sel]))
-                            if pred_key == "pred_sensitivity"
-                            else by_dir[d][a][pred_key],
-                            response: auc_oriented(neg, pos)})
-        v = pooled_from(pts)
-        if v is not None:
-            spk_vals.append(v)
-
-    two_vals = []
-    for _ in range(n_boot):
-        take = rng.choice(dirs, size=len(dirs), replace=True)
-        pts = []
-        for d in take:
-            m = by_dir[d][atts[0]]["n_utts"]
-            ridx = rng.integers(0, m, size=m)
-            for a in atts:
-                u = by_dir[d][a]["utts"]
-                neg = np.array(u["neg_m"])[ridx]; pos = np.array(u["pos_m"])[ridx]
-                pred_v = (float(np.mean(np.array(u["sens"])[ridx]))
-                          if pred_key == "pred_sensitivity" else by_dir[d][a][pred_key])
-                pts.append({"attacker": a, pred_key: pred_v,
-                            response: auc_oriented(neg, pos)})
-        v = pooled_from(pts)
-        if v is not None:
-            two_vals.append(v)
-
-    def ci(vals):
-        return ([float(np.percentile(vals, 2.5)), float(np.percentile(vals, 97.5))]
-                if vals else [None, None])
-
-    return {"observed": obs, "n_speakers": len(all_spk),
-            "ci_direction_cluster": ci(dir_vals),
-            "ci_speaker_cluster": ci(spk_vals),
-            "ci_two_way_dir_x_utt": ci(two_vals)}
+    d_dir, d_spk, d_two = diag(dir_vals), diag(spk_vals), diag(two_vals)
+    return {"observed": obs, "n_speakers": len(all_spk), "n_directions": len(by_dir),
+            "ci_direction_cluster": d_dir["ci"],
+            "ci_speaker_cluster": d_spk["ci"],
+            "ci_two_way_dir_x_utt": d_two["ci"],
+            "bootstrap_diagnostics": {"direction": d_dir, "speaker": d_spk,
+                                      "two_way": d_two},
+            "method": "Owen pigeonhole two-way cluster bootstrap; direction and "
+                      "utterance/speaker are crossed global clusters"}
 
 
 def _necessity_test(test_pts, responses=("paired_wave", "paired_mel", "auc_mel",

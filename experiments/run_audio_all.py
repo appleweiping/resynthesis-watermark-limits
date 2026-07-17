@@ -52,10 +52,14 @@ def main() -> None:
              "--calib-extra-from", part, "--n-calib", "4000", "--out", out])
         extra.append(out)
 
-    # pin/verify the model set (P0-4): capture models.lock.json once if absent, then
-    # every experiment verifies checkpoint hashes against it at startup.
+    # REQUIRE a committed model lock (P0-H): a formal run never auto-generates it.
+    # Capture it once with scripts/capture_model_lock.py and commit; this aborts if absent.
     if not (ROOT / "models.lock.json").exists():
-        run([py, "scripts/capture_model_lock.py", "--device", args.device])
+        sys.exit("FATAL: models.lock.json missing. A formal run requires a committed "
+                 "model lock — run `python scripts/capture_model_lock.py --device "
+                 f"{args.device}` once and commit it, then re-run.")
+    from experiments.audio.model_lock import verify_all
+    verify_all(strict=True, require=True)
 
     m0 = f"data/manifest_seed{seeds[0]}.json"
     run([py, "-m", "experiments.audio.e1_survival", "--manifest", m0,

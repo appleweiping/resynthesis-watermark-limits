@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-"""Capture the exact model set into models.lock.json (run ONCE on the GPU host).
+"""Capture the exact model set into models.lock.json (run ONCE on a host, then commit).
 
-Loads every attacker + baseline (populating the HF / torch.hub caches), then records:
-  * hf_revisions:  {repo -> resolved commit SHA} read from the HF cache refs,
-  * checkpoint_hashes: {name -> {sha256, files[]}} SHA-256 over each model's on-disk
-    checkpoint files (HF snapshots, torch.hub caches, local model dirs, GH-release DAC).
+Loads every attacker + baseline (populating the HF / torch.hub caches), then records,
+per logical model in experiments.audio.model_lock.MODEL_SOURCES:
+  * hf_revisions:  {repo -> resolved commit SHA} (HF models only),
+  * checkpoint_hashes: {name -> {sha256, files:[basenames], source}} where sha256 is
+    the PORTABLE digest (basename + content only, no absolute paths — P0-H).
 
-Commit the resulting models.lock.json; subsequent runs verify against it
-(experiments.audio.model_lock.verify_all) and pin from_pretrained via ``revision``.
+The committed models.lock.json is then verified on every run (verify_all(require=True)).
 
     python scripts/capture_model_lock.py --device cuda
 """
@@ -18,36 +18,11 @@ import argparse
 import json
 from pathlib import Path
 
-from experiments.audio.attackers import DEFAULT_ATTACKERS, build_attackers
+from experiments.audio.attackers import build_attackers
 from experiments.audio.baselines import build_baselines
-from experiments.audio.model_lock import LOCK_PATH, sha256_tree
-
-HF_REPOS = ["charactr/vocos-mel-24khz", "charactr/vocos-encodec-24khz",
-            "hubertsiuzdak/snac_24khz", "M4869/WavMark"]
-
-
-def _hf_cache_root() -> Path:
-    try:
-        from huggingface_hub.constants import HF_HUB_CACHE
-        return Path(HF_HUB_CACHE)
-    except Exception:
-        return Path.home() / ".cache" / "huggingface" / "hub"
-
-
-def _repo_dir(root: Path, repo: str) -> Path:
-    return root / ("models--" + repo.replace("/", "--"))
-
-
-def _resolved_commit(root: Path, repo: str) -> str | None:
-    ref = _repo_dir(root, repo) / "refs" / "main"
-    return ref.read_text().strip() if ref.exists() else None
-
-
-def _snapshot_files(root: Path, repo: str) -> list[str]:
-    snaps = _repo_dir(root, repo) / "snapshots"
-    if not snaps.exists():
-        return []
-    return [str(p) for p in snaps.rglob("*") if p.is_file()]
+from experiments.audio.e1_survival import DEFAULT_ATTACKERS, DEFAULT_BASELINES
+from experiments.audio.model_lock import (LOCK_PATH, MODEL_SOURCES, hf_commit,
+                                          model_files, portable_hash)
 
 
 def main() -> None:
@@ -57,39 +32,34 @@ def main() -> None:
 
     # load everything so caches are populated
     build_attackers(DEFAULT_ATTACKERS, args.device, strict=True)
-    build_baselines(["audioseal", "wavmark", "silentcipher"], args.device, strict=True)
+    build_baselines(DEFAULT_BASELINES, args.device, strict=True)
 
-    root = _hf_cache_root()
     lock: dict = {"hf_revisions": {}, "checkpoint_hashes": {}}
-    for repo in HF_REPOS:
-        sha = _resolved_commit(root, repo)
-        if sha:
-            lock["hf_revisions"][repo] = sha
-        files = _snapshot_files(root, repo)
-        if files:
-            lock["checkpoint_hashes"][repo] = {"sha256": sha256_tree(files),
-                                               "files": files}
+    for name, (kind, ref) in MODEL_SOURCES.items():
+        files = model_files(name)
+        if not files:
+            print(f"[warn] {name}: no files found on this host — skipped")
+            continue
+        if kind == "hf":
+            sha = hf_commit(ref)
+            if sha:
+                lock["hf_revisions"][ref] = sha
+        lock["checkpoint_hashes"][name] = {
+            "sha256": portable_hash(files),
+            "files": sorted(Path(f).name for f in files),
+            "n_files": len(files),
+            "source": f"{kind}:{ref}",
+        }
 
-    # local / non-HF checkpoints (best-effort; only recorded if present)
-    import torch
-
-    extra = {
-        "silentcipher_44_1k": list(Path(
-            "/root/autodl-tmp/silentcipher-models/44_1_khz/73999_iteration").glob("*")),
-        "knnvc_hub": list((Path(torch.hub.get_dir()) / "bshall_knn-vc_main").rglob("*")),
-    }
-    for name, paths in extra.items():
-        files = [str(p) for p in paths if p.is_file()]
-        if files:
-            lock["checkpoint_hashes"][name] = {"sha256": sha256_tree(files),
-                                               "files": files}
-
-    Path(LOCK_PATH).write_text(json.dumps(lock, indent=2), encoding="utf-8")
+    Path(LOCK_PATH).write_text(json.dumps(lock, indent=2, sort_keys=True) + "\n",
+                               encoding="utf-8")
     print(f"wrote {LOCK_PATH}")
-    print(f"  hf_revisions: {len(lock['hf_revisions'])} repos")
-    print(f"  checkpoint_hashes: {len(lock['checkpoint_hashes'])} entries")
+    print(f"  hf_revisions: {len(lock['hf_revisions'])}")
+    print(f"  checkpoint_hashes: {len(lock['checkpoint_hashes'])}")
+    for name, rec in lock["checkpoint_hashes"].items():
+        print(f"    {name:22s} {rec['sha256'][:16]} ({rec['n_files']} files)")
     for repo, sha in lock["hf_revisions"].items():
-        print(f"    {repo} @ {sha}")
+        print(f"    rev {repo} @ {sha}")
 
 
 if __name__ == "__main__":

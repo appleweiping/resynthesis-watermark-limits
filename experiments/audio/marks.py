@@ -164,46 +164,66 @@ def scale_to_snr(x: torch.Tensor, direction: torch.Tensor, snr_db: float) -> tor
 def scale_to_pesq(
     x: torch.Tensor, direction: torch.Tensor, sr: int,
     target: float = 4.2, tol: float = 0.05, max_iter: int = 12,
-) -> tuple[torch.Tensor, float, float]:
-    """Bisection on the embedding gain so PESQ-WB(x, x+delta) hits `target` +- `tol`.
+) -> tuple[torch.Tensor, float, float, str]:
+    """Scale the embedding gain so PESQ-WB(x, x+delta) hits `target` +- `tol` (P0-E).
 
-    Returns (delta, achieved_pesq, snr_db). All marks calibrated this way share the
-    same perceptual budget across CONSTRUCTED marks (PESQ-matched, not SNR-matched); the
-    # deployed baselines saturate above this target and run at native strength.
+    PESQ-vs-gain is not guaranteed monotone, so we (1) evaluate a coarse log grid to
+    bracket the target and detect non-monotonicity, then (2) bisect inside the bracket.
+    Returns (delta, achieved_pesq, snr_db, status), where status is:
+      "ok"            achieved PESQ within `tol` of target;
+      "saturated_high" even the largest probed gain stays above target (mark too
+                       quiet to reach the budget) — returns that largest gain;
+      "saturated_low"  even the smallest probed gain is already below target (mark
+                       too disruptive) — returns that smallest gain;
+      "off_tolerance"  bracketed but bisection could not get within `tol`.
+    The caller must record the status and report the fraction that is not "ok" — we do
+    NOT silently pretend every instance matched the budget.
     """
     from pesq import pesq as pesq_fn
 
     ref = x.detach().cpu().numpy().astype(np.float64)
     d_unit = (direction / torch.linalg.norm(direction).clamp_min(1e-12))
+    xnorm = float(torch.linalg.norm(x))
 
     def pesq_at(alpha: float) -> float:
         deg = (x + alpha * d_unit).detach().cpu().numpy().astype(np.float64)
         return float(pesq_fn(sr, ref, deg, "wb"))
 
-    # bracket: grow alpha until PESQ drops below target
-    lo, hi = 0.0, float(0.003 * torch.linalg.norm(x))
-    p_hi = pesq_at(hi)
-    grow = 0
-    while p_hi > target and grow < 14:
-        lo, hi = hi, hi * 2.0
-        p_hi = pesq_at(hi)
-        grow += 1
+    def finish(alpha: float, status: str):
+        delta = alpha * d_unit
+        snr = float(20.0 * torch.log10(
+            torch.linalg.norm(x) / torch.linalg.norm(delta).clamp_min(1e-12)))
+        return delta, pesq_at(alpha), snr, status
+
+    # coarse log grid to bracket the target robustly (PESQ can be non-monotone)
+    grid = np.geomspace(1e-4 * xnorm, 0.2 * xnorm, 16)
+    pj = np.array([pesq_at(float(a)) for a in grid])
+    if pj.min() > target:                      # never drops to target — too quiet
+        return finish(float(grid[-1]), "saturated_high")
+    if pj.max() < target:                      # already below target at smallest gain
+        return finish(float(grid[0]), "saturated_low")
+    # bracket = adjacent grid points straddling the target (largest such alpha, so we
+    # stay on the high-gain side of any non-monotone wiggle near transparency)
+    straddle = [i for i in range(len(grid) - 1)
+                if (pj[i] - target) * (pj[i + 1] - target) <= 0]
+    i = straddle[-1]
+    lo, hi = float(grid[i]), float(grid[i + 1])
+    p_lo, p_hi = float(pj[i]), float(pj[i + 1])
+    best_a, best_p = (lo if abs(p_lo - target) < abs(p_hi - target) else hi), \
+                     min(p_lo, p_hi, key=lambda p: abs(p - target))
     for _ in range(max_iter):
         mid = 0.5 * (lo + hi)
         p = pesq_at(mid)
+        if abs(p - target) < abs(best_p - target):
+            best_a, best_p = mid, p
         if abs(p - target) <= tol:
-            lo = hi = mid
-            break
-        if p > target:
-            lo = mid
+            return finish(mid, "ok")
+        # keep the sub-interval that still straddles the target
+        if (p_lo - target) * (p - target) <= 0:
+            hi, p_hi = mid, p
         else:
-            hi = mid
-    alpha = 0.5 * (lo + hi)
-    delta = alpha * d_unit
-    achieved = pesq_at(alpha)
-    snr = float(20.0 * torch.log10(
-        torch.linalg.norm(x) / torch.linalg.norm(delta).clamp_min(1e-12)))
-    return delta, achieved, snr
+            lo, p_lo = mid, p
+    return finish(best_a, "off_tolerance")
 
 
 # ---- diagnostic separability probes ---------------------------------------------

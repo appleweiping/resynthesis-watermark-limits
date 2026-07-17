@@ -122,14 +122,18 @@ def run_split(split: str, man: dict, attackers, an: MelAnalysis, args,
         speakers = [spk[uid] for uid in sel]
         # mark-level (attacker-independent) per-utterance quantities
         mel_fracs, snrs, pesqs, sisdrs, mag_fracs, centroids = [], [], [], [], [], []
+        pesq_status = []
         for uid in sel:
             x = xs[uid]
             key = 100_000 * (di + 1) + stable_key(uid)      # STABLE (P0-3)
             builder = DIRECTION_BUILDERS[kind]
             d_unit = (mixture_direction(an, x, key, beta) if kind == "mixture"
                       else builder(an, x, key))
-            # PESQ-matched budget (P0-1): same perceptual target for every direction
-            delta, ach_pesq, ach_snr = scale_to_pesq(x, d_unit, SR, target=PESQ_TARGET)
+            # PESQ-matched budget (P0-1/P0-E): same perceptual target for every
+            # direction; status records saturated/off-tolerance instances honestly.
+            delta, ach_pesq, ach_snr, status = scale_to_pesq(
+                x, d_unit, SR, target=PESQ_TARGET)
+            pesq_status.append(status)
             x_np = x.cpu().numpy()
             ach_sisdr = si_sdr(x_np, (x + delta).cpu().numpy())
             if len(verif) < 60 and kind in ("nullspace", "rowspace"):
@@ -181,8 +185,11 @@ def run_split(split: str, man: dict, attackers, an: MelAnalysis, args,
                 "pred_spectral_centroid": float(np.mean(centroids)),
                 # per-utterance arrays for cluster-aware bootstrap (P0-2). Indices
                 # are aligned to `sel`, so the SAME index means the SAME utterance
-                # across all attacker points of this direction.
+                # across all attacker points of this direction. `uid` is the GLOBAL
+                # utterance id, so a valid two-way bootstrap can give one utterance the
+                # same weight everywhere it appears (P0-B).
                 "utts": {
+                    "uid": list(sel),
                     "speaker": speakers,
                     "sens": [float(v) for v in pa["sens"]],
                     "pos_m": [float(v) for v in pa["pos_m"]],
@@ -192,6 +199,7 @@ def run_split(split: str, man: dict, attackers, an: MelAnalysis, args,
                     "pesq": [float(v) for v in pesqs],
                     "si_sdr": [float(v) for v in sisdrs],
                     "snr_db": [float(v) for v in snrs],
+                    "pesq_status": list(pesq_status),
                 },
             })
         if (di + 1) % 10 == 0:
@@ -242,10 +250,15 @@ def main() -> None:
     ppesq = np.array([p["pred_pesq"] for p in test_pts])
     psi = np.array([p["pred_si_sdr"] for p in test_pts])
     psnr = np.array([p["pred_snr_db"] for p in test_pts])
+    all_status = [s for p in test_pts + fit_pts for s in p["utts"]["pesq_status"]]
+    n_stat = max(1, len(all_status))
     out["achieved_budget"] = {
         "pesq": [float(np.percentile(ppesq, q)) for q in (5, 50, 95)],
         "si_sdr": [float(np.percentile(psi, q)) for q in (5, 50, 95)],
         "snr_db": [float(np.percentile(psnr, q)) for q in (5, 50, 95)],
+        "n_instances": len(all_status),
+        "frac_within_tol": sum(s == "ok" for s in all_status) / n_stat,
+        "status_counts": {s: all_status.count(s) for s in set(all_status)},
     }
     for resp in ("paired_mel", "paired_wave", "auc_mel", "auc_wave"):
         out[f"evaluation_{resp}"] = {p: _fit_eval(fit_pts, test_pts, p, resp)

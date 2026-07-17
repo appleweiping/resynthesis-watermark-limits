@@ -137,27 +137,21 @@ nearly all
 
 No score sign/order inversion occurred in the final protocol.
 
-**E2 — predictor validation (held-out).** *(Numbers below are from the prior random-budget
-run — see Status; they regenerate under the PESQ-matched + cluster-aware protocol.)*
-Channel-relative sensitivity `s_W` predicts
-mel-domain detectability **within every attacker** (per-attacker Spearman 0.48–0.80;
-pooled within-attacker **ρ = 0.72, 95% CI [0.60, 0.80]**, permutation **p < 10⁻³**),
-replicated at ρ = 0.66 / 0.60 on two further independent manifest seeds. Competitors
-fail (waveform SNR ρ = −0.13, spectral centroid ρ = −0.27). The exact-erasure regime
-holds out-of-sample: the 31 near-null directions deviate from chance by a **maximum** of
-|AUC − 0.5| = 0.045. The mel-domain result holds under both the unpaired detectability
-response (ρ = 0.72) and a stricter *paired* per-utterance transmission statistic (ρ = 0.45,
-both p < 10⁻³, replicated across seeds). A *waveform*-domain detector shows a weaker,
-opposite-signed **unpaired** trend for EnCodec/SNAC, but it does **not** survive the paired
-statistic (EnCodec −0.02, SNAC +0.10) or replicate across seeds, so we report it as an
-observation and do **not** claim a robust detector-domain sign reversal.
+**E2 — predictor validation (held-out).** *Numbers are regenerating* under the corrected
+protocol (PESQ-matched budget; valid two-way cluster inference; incremental-value ablation
+of `s_W` over the static magnitude-fraction geometry). No headline ρ/CI/p is stated here
+until the frozen three-seed run produces it — the prior random-budget numbers have been
+removed. What the experiment asks: does a channel-relative geometric quantity add
+predictive value, over static magnitude geometry, for held-out mel-probe detector-score
+survival, within each channel?
 
-**E3 — multi-bit proof of concept (blind decoder, 8 bits, PESQ 4.2).** BER 4.5% clean →
-10% (mel-GL / Vocos), 17% (EnCodec / DAC), 47% (SNAC, a reported failure case). This
-demonstrates the invariant sub-channel carries bits; it is **not** a rate measurement.
+**E3 — multi-bit proof of concept (blind decoder, 8 bits).** Per-clip decoded bits retain
+above-chance dependence after several resynthesizers; block error rate is high (payload
+reliability is poor). Exact BER/BLER with **clip-cluster** CIs come from the frozen run.
 
-*(All numbers are injected into the paper by `scripts/make_paper_macros.py` from the
-result JSONs — the manuscript cannot drift from the code.)*
+*(Every number is injected into the paper by `scripts/make_paper_macros.py` from the frozen
+result JSONs — the manuscript cannot drift from the code, and a formal build fails if any
+macro is missing.)*
 
 ## Reproducing
 
