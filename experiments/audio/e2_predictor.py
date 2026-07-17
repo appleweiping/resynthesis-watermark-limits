@@ -51,7 +51,7 @@ from .analysis import MelAnalysis
 from .attackers import build_attackers
 from .data_io import clip_uid, iter_split, load_manifest
 from .e2_stats import (_cluster_cis, _common_perm_test, _fit_eval,
-                       _necessity_test)
+                       _necessity_test, _subset_within_rho, incremental_value)
 from .marks import (DIRECTION_BUILDERS, mel_probe_direction, mixture_direction,
                     probe_score, probe_score_mel, scale_to_pesq, verify_direction)
 from .metrics_audio import auc_oriented, auc_raw, si_sdr
@@ -273,6 +273,11 @@ def main() -> None:
         out[f"by_attacker_{resp}"] = by_att
     # cluster-aware CIs for the primary predictor/response pair (headline number)
     out["cluster_cis_auc_mel"] = _cluster_cis(test_pts, "pred_sensitivity", "auc_mel")
+    # incremental value of s_W over static magnitude geometry (P0-C) — decides whether
+    # the "channel-specific predictor" claim is kept or downgraded
+    out["incremental_value_auc_mel"] = incremental_value(fit_pts, test_pts,
+                                                         response="auc_mel")
+    out["subset_rho_auc_mel"] = _subset_within_rho(test_pts, "auc_mel")
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(out), encoding="utf-8")

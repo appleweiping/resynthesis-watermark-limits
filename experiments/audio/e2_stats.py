@@ -278,6 +278,131 @@ def _cluster_cis(test_pts, pred_key: str = "pred_sensitivity",
                       "utterance/speaker are crossed global clusters"}
 
 
+def _within_rank_arr(vals, strata):
+    from scipy import stats as sps
+    out = np.empty(len(vals), float)
+    for s in np.unique(strata):
+        idx = np.flatnonzero(strata == s)
+        out[idx] = sps.rankdata(np.asarray(vals, float)[idx]) / (len(idx) + 1.0)
+    return out
+
+
+def _design_matrix(pts, cont_controls, strata, use_kind=True):
+    """Within-attacker-ranked continuous controls + kind and attacker one-hots."""
+    cols = [_within_rank_arr([p[c] for p in pts], strata) for c in cont_controls]
+    if use_kind:
+        kinds = sorted({p.get("kind", "na") for p in pts})
+        for k in kinds[1:]:                       # drop first (reference)
+            cols.append(np.array([1.0 if p.get("kind") == k else 0.0 for p in pts]))
+    atts = sorted(set(strata))
+    for a in atts[1:]:
+        cols.append((strata == a).astype(float))
+    cols.append(np.ones(len(pts)))                # intercept
+    return np.column_stack(cols) if cols else np.ones((len(pts), 1))
+
+
+def _oos_r2_rmse(Xf, yf, Xt, yt):
+    beta, *_ = np.linalg.lstsq(Xf, yf, rcond=None)
+    yh = Xt @ beta
+    ss_res = float(np.sum((yt - yh) ** 2))
+    ss_tot = float(np.sum((yt - np.mean(yt)) ** 2)) + 1e-20
+    return 1.0 - ss_res / ss_tot, float(np.sqrt(np.mean((yt - yh) ** 2)))
+
+
+def incremental_value(fit_pts, test_pts, target="pred_sensitivity",
+                      response="auc_mel",
+                      cont_controls=("pred_stft_mag_fraction", "beta", "pred_pesq",
+                                     "pred_si_sdr", "pred_snr_db",
+                                     "pred_spectral_centroid"),
+                      n_perm=1000, seed=0) -> dict:
+    """Does the channel-specific predictor `target` (s_W) add value over the static
+    magnitude geometry and perceptual budget (P0-C)?
+
+      * partial within-attacker Spearman of target vs response, controlling for the
+        static magnitude fraction, kind, beta, PESQ, SI-SDR, SNR, centroid;
+      * held-out nested models M0 (controls incl. static magfrac + kind + beta +
+        attacker FE) vs M1 (+ target): out-of-sample dR^2, dRMSE;
+      * permutation p for the incremental target (target ranks permuted within
+        direction clusters, refit, dR^2 recomputed).
+    If the incremental value is ~0 the paper must downgrade the claim to
+    "static magnitude geometry predicts controlled mel-probe survival".
+    """
+    from scipy import stats as sps
+
+    sf = np.array([p["attacker"] for p in fit_pts])
+    st = np.array([p["attacker"] for p in test_pts])
+    yf = _within_rank_arr([p[response] for p in fit_pts], sf)
+    yt = _within_rank_arr([p[response] for p in test_pts], st)
+    tf = _within_rank_arr([p[target] for p in fit_pts], sf)
+    tt = _within_rank_arr([p[target] for p in test_pts], st)
+
+    X0f = _design_matrix(fit_pts, cont_controls, sf)
+    X0t = _design_matrix(test_pts, cont_controls, st)
+    X1f = np.column_stack([X0f, tf])
+    X1t = np.column_stack([X0t, tt])
+    r2_0, rmse_0 = _oos_r2_rmse(X0f, yf, X0t, yt)
+    r2_1, rmse_1 = _oos_r2_rmse(X1f, yf, X1t, yt)
+
+    # partial correlation on TEST: residualize target & response on controls
+    b_t, *_ = np.linalg.lstsq(X0t, tt, rcond=None)
+    b_y, *_ = np.linalg.lstsq(X0t, yt, rcond=None)
+    rt, ry = tt - X0t @ b_t, yt - X0t @ b_y
+    partial_rho = float(sps.spearmanr(rt, ry).statistic)
+
+    # permutation: permute target within direction clusters on FIT, refit, dR^2 on TEST
+    dirs_f = np.array([p["dir"] for p in fit_pts])
+    obs_dr2 = r2_1 - r2_0
+    rng = np.random.default_rng(seed)
+    null = []
+    for _ in range(n_perm):
+        tfp = tf.copy()
+        perm_dirs = rng.permutation(np.unique(dirs_f))
+        mapping = dict(zip(np.unique(dirs_f), perm_dirs))
+        order = np.argsort([mapping[d] for d in dirs_f], kind="stable")
+        tfp = tf[order]
+        X1fp = np.column_stack([X0f, tfp])
+        r2_1p, _ = _oos_r2_rmse(X1fp, yf, np.column_stack([X0t, tt]), yt)
+        null.append(r2_1p - r2_0)
+    null = np.array(null)
+    p_incr = float((np.sum(null >= obs_dr2) + 1) / (n_perm + 1))
+
+    return {"partial_within_spearman": partial_rho,
+            "r2_M0_static": r2_0, "r2_M1_plus_sW": r2_1,
+            "delta_r2": obs_dr2, "delta_rmse": rmse_0 - rmse_1,
+            "perm_p_incremental": p_incr,
+            "controls": list(cont_controls) + ["kind", "beta", "attacker_FE"],
+            "interpretation": ("s_W adds held-out value beyond static magnitude geometry"
+                               if (obs_dr2 > 0 and p_incr < 0.05)
+                               else "no clear incremental value over static magnitude "
+                                    "geometry — downgrade the channel-specific claim")}
+
+
+def _subset_within_rho(test_pts, response="auc_mel", target="pred_sensitivity"):
+    """Within-attacker pooled Spearman on informative subsets (P0-C): mixture-only,
+    per-kind, and narrow-beta-bin — so the association is not an artifact of pooling
+    across kinds."""
+    out = {}
+    mix = [p for p in test_pts if p.get("kind") == "mixture"]
+    if len(mix) > 20:
+        out["mixture_only"] = _within_pooled_spearman(
+            np.array([p[target] for p in mix]), np.array([p[response] for p in mix]),
+            np.array([p["attacker"] for p in mix]))
+    for k in sorted({p.get("kind") for p in test_pts}):
+        sub = [p for p in test_pts if p.get("kind") == k]
+        if len(sub) > 20:
+            out[f"kind_{k}"] = _within_pooled_spearman(
+                np.array([p[target] for p in sub]),
+                np.array([p[response] for p in sub]),
+                np.array([p["attacker"] for p in sub]))
+    band = [p for p in test_pts if 0.3 <= p.get("beta", -1) <= 0.7]
+    if len(band) > 20:
+        out["beta_0p3_0p7"] = _within_pooled_spearman(
+            np.array([p[target] for p in band]),
+            np.array([p[response] for p in band]),
+            np.array([p["attacker"] for p in band]))
+    return out
+
+
 def _necessity_test(test_pts, responses=("paired_wave", "paired_mel", "auc_mel",
                                          "auc_wave"),
                     rel_threshold: float = 0.25) -> dict:

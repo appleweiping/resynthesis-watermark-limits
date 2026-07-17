@@ -16,7 +16,8 @@ from __future__ import annotations
 import numpy as np
 
 from experiments.audio.e2_stats import (_cluster_cis, _common_perm_test,
-                                        _pigeonhole_ci, _within_pooled_spearman)
+                                        _pigeonhole_ci, _within_pooled_spearman,
+                                        incremental_value)
 
 ATTS = ["mel80_gl", "vocos", "encodec6k", "dac", "snac"]
 KINDS = ["nullspace", "rowspace", "mixture"]
@@ -45,7 +46,14 @@ def _make_points(n_dirs=40, n_utts=16, signal=True, seed=0, type_confound=False)
             auc = max(auc, 1 - auc)
             pts.append({
                 "dir": d, "attacker": a, "n_utts": n_utts, "kind": kind,
+                "beta": float(rng.random()),
                 "pred_sensitivity": float(np.mean(sens_u)),
+                # controls (noise here, so s_W carries the unique signal under `signal`)
+                "pred_stft_mag_fraction": float(rng.normal(0.5, 0.3)),
+                "pred_pesq": float(rng.normal(4.2, 0.05)),
+                "pred_si_sdr": float(rng.normal(25, 3)),
+                "pred_snr_db": float(rng.normal(22, 3)),
+                "pred_spectral_centroid": float(rng.normal(2000, 400)),
                 "auc_mel": auc,
                 "utts": {"uid": list(uids), "speaker": list(speakers),
                          "sens": [float(v) for v in sens_u],
@@ -106,6 +114,25 @@ def test_null_type_one_error_controlled():
     assert rejections <= 5, f"Type-I error too high: {rejections}/{trials}"
 
 
+def test_incremental_value_when_sw_carries_unique_signal():
+    """When the response is driven by s_W and the static controls are noise, the
+    ablation must credit s_W with held-out incremental value."""
+    fit = _make_points(signal=True, seed=10)
+    test = _make_points(signal=True, seed=11)
+    iv = incremental_value(fit, test, response="auc_mel", n_perm=300, seed=0)
+    assert iv["delta_r2"] > 0, iv
+    assert iv["perm_p_incremental"] < 0.10, iv
+
+
+def test_no_incremental_value_under_confound():
+    """Under a type-confounded null (response depends only on kind, s_W is within-kind
+    noise), the ablation must NOT credit s_W with incremental value."""
+    fit = _make_points(signal=False, seed=20, type_confound=True)
+    test = _make_points(signal=False, seed=21, type_confound=True)
+    iv = incremental_value(fit, test, response="auc_mel", n_perm=300, seed=0)
+    assert iv["perm_p_incremental"] > 0.05, iv
+
+
 def test_seeded_reproducibility():
     pts = _make_points(signal=True, seed=7)
     a = _cluster_cis(pts, n_boot=120, seed=0)
@@ -118,5 +145,7 @@ if __name__ == "__main__":
     test_signal_recovered_and_significant()
     test_bootstrap_preserves_multiplicity()
     test_null_type_one_error_controlled()
+    test_incremental_value_when_sw_carries_unique_signal()
+    test_no_incremental_value_under_confound()
     test_seeded_reproducibility()
     print("E2 statistical-validation tests PASSED")
